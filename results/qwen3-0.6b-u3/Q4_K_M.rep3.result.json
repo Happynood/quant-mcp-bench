@@ -1,0 +1,53 @@
+{
+  "n": 10,
+  "svr_mcp": 0.8,
+  "tsr": 0.5,
+  "svr_mcp_ci": [
+    0.5,
+    1.0
+  ],
+  "tsr_ci": [
+    0.2,
+    0.8
+  ],
+  "svr": 0.8,
+  "total_latency_ms": 3876.438371999029,
+  "vram_gb": 1.2197265625,
+  "config": {
+    "model": "~/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+    "backend": "llama-cpp",
+    "quant": "Q4_K_M",
+    "decoding": "free",
+    "chat_variant": "qwen3_nothink",
+    "server_tier": "sqlite",
+    "sample_size": 10,
+    "seed": 0,
+    "temperature": 0.0
+  },
+  "manifest": {
+    "timestamp": "2026-07-06T23:43:46.915934+00:00",
+    "git_commit": "331591109d0a806f86fde5ec0bef2992d0b065f2",
+    "git_dirty": true,
+    "config_sha256": "1a33f81737f9e2e5d8e08fd6890696056833777a1690b83020f9a50c320fce7b",
+    "fixture_sha256": "1f4db6fb92e1facce1208ad3ed87b1c276c740c1eb188cfd29110f1cd934d10c",
+    "model": "~/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+    "backend": "llama-cpp",
+    "quant": "Q4_K_M",
+    "decoding": "free",
+    "server_tier": "sqlite",
+    "mcp_server_version": "1.28.1",
+    "seed": 0,
+    "python_version": "3.11.15 (main, May 10 2026, 19:28:18) [Clang 22.1.3 ]",
+    "platform_info": "Linux-7.0.0-27-generic-x86_64-with-glibc2.43",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+    "cpu_count": 12,
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "driver_version": "595.71.05",
+      "cuda_version": "13.2",
+      "vram_total_mb": 4096,
+      "torch_cuda_available": null,
+      "torch_cuda_device_name": null
+    }
+  }
+}

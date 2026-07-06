@@ -321,61 +321,122 @@ fine) but execution-wrong.
 
 Raw results + manifests: `results/{qwen3-0.6b,llama3.2-1b}-u3/*.result.json`.
 
+## Repeat-run stability: 3 independent runs per config
+
+Every table above shows a *single* run per (model, quant, tier). Given the
+already-documented GPU decode non-determinism, and to have an honest
+answer to "how much does a single-run point estimate actually move
+around," every one of the 24 configs above was re-run 2 more times
+(`*.rep2.result.json`, `*.rep3.result.json` — same config, same seed,
+same greedy/temperature=0 settings; only wall-clock time separates the 3
+runs). This is the most reliable set of numbers in this document — where
+it disagrees with a table above, trust this section.
+
+| Model | Tier | Quant | SVR-MCP mean [min, max] | TSR mean [min, max] |
+|---|---|---|---|---|
+| Qwen3-0.6B | filesystem | fp16 | 0.833 [0.833, 0.833] | 0.694 [0.583, 0.750] |
+| Qwen3-0.6B | filesystem | Q8_0 | 0.833 [0.833, 0.833] | 0.667 [0.667, 0.667] |
+| Qwen3-0.6B | filesystem | Q5_K_M | 0.806 [0.750, 0.833] | 0.694 [0.667, 0.750] |
+| Qwen3-0.6B | filesystem | Q4_K_M | 0.889 [0.833, 0.917] | 0.694 [0.583, 0.750] |
+| Qwen3-0.6B | git | fp16 | 1.000 [1.000, 1.000] | 1.000 [1.000, 1.000] |
+| Qwen3-0.6B | git | Q8_0 | 1.000 [1.000, 1.000] | 0.967 [0.900, 1.000] |
+| Qwen3-0.6B | git | Q5_K_M | 1.000 [1.000, 1.000] | 1.000 [1.000, 1.000] |
+| Qwen3-0.6B | git | Q4_K_M | 0.967 [0.900, 1.000] | 0.867 [0.800, 0.900] |
+| Qwen3-0.6B | sqlite | fp16 | 0.500 [0.500, 0.500] | 0.400 [0.400, 0.400] |
+| Qwen3-0.6B | sqlite | Q8_0 | 0.500 [0.500, 0.500] | 0.300 [0.300, 0.300] |
+| Qwen3-0.6B | sqlite | Q5_K_M | 0.400 [0.400, 0.400] | 0.400 [0.400, 0.400] |
+| Qwen3-0.6B | sqlite | Q4_K_M | 0.800 [0.800, 0.800] | 0.500 [0.500, 0.500] |
+| Llama-3.2-1B | filesystem | fp16 | 0.000 [0.000, 0.000] | 0.000 [0.000, 0.000] |
+| Llama-3.2-1B | filesystem | Q8_0 | 0.000 [0.000, 0.000] | 0.000 [0.000, 0.000] |
+| Llama-3.2-1B | filesystem | Q5_K_M | 0.222 [0.167, 0.250] | 0.222 [0.167, 0.250] |
+| Llama-3.2-1B | filesystem | Q4_K_M | 0.250 [0.250, 0.250] | 0.250 [0.250, 0.250] |
+| Llama-3.2-1B | git | fp16 | 0.500 [0.400, 0.600] | 0.200 [0.200, 0.200] |
+| Llama-3.2-1B | git | Q8_0 | 0.400 [0.400, 0.400] | 0.233 [0.200, 0.300] |
+| Llama-3.2-1B | git | Q5_K_M | 0.533 [0.500, 0.600] | 0.233 [0.200, 0.300] |
+| Llama-3.2-1B | git | Q4_K_M | 0.600 [0.600, 0.600] | 0.233 [0.200, 0.300] |
+| Llama-3.2-1B | sqlite | fp16 | 0.200 [0.200, 0.200] | 0.100 [0.100, 0.100] |
+| Llama-3.2-1B | sqlite | Q8_0 | 0.200 [0.200, 0.200] | 0.100 [0.100, 0.100] |
+| Llama-3.2-1B | sqlite | Q5_K_M | 0.100 [0.100, 0.100] | 0.100 [0.100, 0.100] |
+| Llama-3.2-1B | sqlite | Q4_K_M | 0.300 [0.300, 0.300] | 0.100 [0.100, 0.100] |
+
+What this shows:
+
+1. **Most rows are perfectly stable across 3 runs** (min == max) — mostly
+   the extreme rows (0.000, 1.000, or a very confidently-wrong/right
+   quant) where the model's behavior doesn't sit near a decision boundary.
+2. **The rows that do move are exactly the ones that matter most for any
+   quantization-degradation claim**: Qwen3-0.6B filesystem Q5_K_M/Q4_K_M
+   (the two quants closest to fp16's own score), Qwen3-0.6B git Q4_K_M,
+   Llama-3.2-1B filesystem Q5_K_M, and Llama-3.2-1B git (all 4 quants show
+   some spread). These are precisely the comparisons this project's core
+   hypothesis depends on, and single-run point estimates for them should
+   not be trusted at n=10-12 without this range attached.
+3. **No row's range crosses from "clearly degrading" to "clearly
+   improving"** — the qualitative findings above (Llama-3.2-1B's schema-
+   echo-vs-flat-call shift, the sqlite hallucination/refusal modes) hold
+   up across all 3 runs, even where the exact point estimate doesn't.
+
 ## Cross-Benchmark Consistency (CBC, spec §4.5) and the SVR-vs-TSR gap (H4)
 
 CBC asks: does QuantCall's BFCL-measured quantization degradation pattern
 predict what happens on real MCP schemas? It is computed as the Spearman
 correlation between each (model, quant) pair's BFCL SVR delta (vs. that
 model's own fp16 baseline) and its SVR-MCP delta, where SVR-MCP is pooled
-across all three tiers' result files (weighted by task count):
+across every result file supplied (weighted by task count):
 
 ```
 quantmcp cross-bench results/*/*.result.json --bfcl-results docs/bfcl_reference_svr.json
 ```
 
-| Model | Quant | Δ SVR bfcl | Δ SVR-MCP (pooled U1+U2+U3) |
+**CBC was computed three times as this project's own methodology matured,
+and the three numbers are reported together deliberately, not just the
+final one** — the convergence itself is evidence about how much to trust
+a single-run point estimate at this task-set size:
+
+| Computation | Data behind it | CBC (Spearman rho) |
+|---|---|---|
+| First (Phase 2) | 1 run per (model, quant, tier) | -0.824 |
+| Second (Phase 3, bootstrap-CI re-run) | 1 run per config, re-run once | -0.265 |
+| **Third (this pass, 3 repeats/config)** | **mean of 3 runs per config** | **-0.551** |
+
+All three used the identical configs, seeds, and greedy/temperature=0
+settings — only the number of independent runs pooled into each point
+estimate changed. **The sign (negative) has been stable across all three;
+the magnitude swung by more than 3x (-0.824 to -0.265) between the first
+two single-run computations, then landed at -0.551 once each point
+estimate was itself an average of 3 runs rather than 1.** This is the
+single clearest piece of evidence in this document that CBC — computed as
+a correlation of deltas of deltas, from tasks sets of only 10-12 items —
+amplifies single-run GPU decode noise, and that the 3-repeat mean is the
+number to trust going forward, not either single-run value.
+
+Using the 3-repeat means (see "Repeat-run stability" above) as the SVR-MCP
+input:
+
+| Model | Quant | Δ SVR bfcl | Δ SVR-MCP (3-repeat mean, pooled U1+U2+U3) |
 |---|---|---|---|
-| Llama-3.2-1B | Q4_K_M | -0.047 | +0.125 |
-| Llama-3.2-1B | Q5_K_M | -0.014 | +0.031 |
-| Llama-3.2-1B | Q8_0 | -0.022 | -0.062 |
-| Qwen3-0.6B | Q4_K_M | -0.004 | +0.125 |
-| Qwen3-0.6B | Q5_K_M | +0.001 | -0.031 |
+| Llama-3.2-1B | Q4_K_M | -0.047 | +0.156 |
+| Llama-3.2-1B | Q5_K_M | -0.014 | +0.062 |
+| Llama-3.2-1B | Q8_0 | -0.022 | -0.031 |
+| Qwen3-0.6B | Q4_K_M | -0.004 | +0.104 |
+| Qwen3-0.6B | Q5_K_M | +0.001 | -0.042 |
 | Qwen3-0.6B | Q8_0 | +0.001 | 0.000 |
 
-**CBC = -0.265 (n=6 pairs).** This remains a negative rho — QuantCall's
-BFCL-measured degradation pattern does not carry over cleanly to real MCP
-tool schemas for these two families — but the magnitude is markedly
-smaller than an earlier version of this same computation.
+**CBC = -0.551 (n=6 pairs).** QuantCall's BFCL-measured degradation
+pattern does not carry over cleanly to real MCP tool schemas for these
+two families — the direction is consistent across every computation of
+this number so far, even though the exact magnitude isn't.
 
-**A directly observed instability, not just a caveat:** re-running the
-identical seed=0, greedy, single-repeat U1/U2/U3 configs once more (to
-populate the newly-added bootstrap CI fields on every result) changed this
-project's own CBC point estimate from an earlier **-0.824** to **-0.265**
-— a large swing from re-running the *exact same* configuration twice, not
-from any code or task change. Nearly all of the movement traces to
-Llama-3.2-1B's U2 numbers, which shifted by 1-2 tasks out of 10 between
-runs (see the note in the U2 section above). This is the clearest,
-most concrete demonstration in this document of why GPU greedy-decoding
-non-determinism (documented since Phase 1) matters for any number derived
-from a handful of small task sets: CBC is computed from deltas of deltas,
-so it amplifies exactly this kind of single-run noise. **The sign of CBC
-(negative) has been stable across both computations; the magnitude has
-not** — treat "BFCL's degradation pattern doesn't cleanly predict real-MCP
-degradation for these two families" as the load-bearing claim, and treat
-the specific value -0.265 (or -0.824) as illustrative, not as a number to
-cite on its own.
-
-**This should be read as a preliminary, directional finding, not a
+**This should still be read as a preliminary, directional finding, not a
 statistically established one**: n=6 (model, quant) pairs is far too few
-for a meaningful p-value or CI on a Spearman correlation, and each
-family's MCP-side deltas are pooled across 3 tiers × ~10-12 tasks — not
-enough for a CI on the correlation itself even before accounting for the
-run-to-run instability just described. Bootstrap CI is implemented on
-SVR-MCP/TSR themselves (spec §4.7, `svr_mcp_ci`/`tsr_ci` in every
-`result.json`) but not yet propagated through to a CI on CBC — doing that
-properly would need many repeats per (model, quant, tier) to build an
-empirical distribution over Δ itself, not just a single point estimate
-per repeat.
+for a meaningful p-value or CI on a Spearman correlation, even with 3x
+more underlying task-instance data behind each point than the original
+computation. Bootstrap CI is implemented on SVR-MCP/TSR themselves
+(spec §4.7, `svr_mcp_ci`/`tsr_ci` in every `result.json`) but not yet
+propagated through to a CI on CBC itself — that would need many more
+repeats to build a real empirical distribution over Δ, not the 3 used
+here (3 is enough to demonstrate the instability and get a noticeably
+more stable point estimate; it is not enough for a rigorous CI).
 
 ### Schema Complexity Index vs. degradation (H2) — preliminary, 3 tiers only
 
@@ -385,10 +446,10 @@ degradation that tier shows. Real SCI was computed across all 30 tools
 from the three live tiers (filesystem, git, sqlite) in a single
 z-normalized corpus:
 
-| Tier | Tools | Mean SCI | Mean \|Δ SVR-MCP\| across quants (both models) |
+| Tier | Tools | Mean SCI | Mean \|Δ SVR-MCP\| across quants (both models, 3-repeat means) |
 |---|---|---|---|
-| filesystem (U1) | 14 | +0.206 | 0.097 |
-| git (U2) | 12 | +0.027 | 0.050 |
+| filesystem (U1) | 14 | +0.206 | 0.093 |
+| git (U2) | 12 | +0.027 | 0.044 |
 | sqlite (U3) | 4 | -0.615 | 0.100 |
 
 At face value this runs **opposite** to H2's hypothesis: sqlite has the
