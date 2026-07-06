@@ -1,0 +1,80 @@
+# U2 git-tier task fixture (spec §5). Fixture archive:
+# u2_git/repo.tar.gz — a small deterministic git repository (fixed author
+# identity/dates) with: 3 commits on main, a "feature-x" branch, one staged
+# change (src/app.py), one unstaged change (notes.txt), and one untracked
+# file (draft.txt) already present in the working tree at extraction time.
+# {root} is substituted at runtime with the sandboxed copy's absolute path
+# (also the live server's `--repository` default and the `repo_path`
+# argument every tool call requires). All checks below were verified
+# against a real, locally-launched copy of `mcp-server-git` before being
+# written (its exact response text is not otherwise documented). git
+# checkout/switch is intentionally not exercised here: the fixture's
+# uncommitted staged/unstaged edits make any checkout fail for any target
+# branch (a real, expected git safety behavior, not specific to this
+# server), so it isn't a fair single-call task against this fixture state.
+#
+# Instructions are phrased naturalistically and never name the tool to
+# call, for the same reason as the U1 filesystem tasks: tool selection is
+# part of the difficulty this benchmark measures.
+tasks:
+  - id: u2-status
+    instruction: "What's the current status of the working tree in the git repository at {root}?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Untracked files"}
+
+  - id: u2-log
+    instruction: "Show the commit history of the git repository at {root}."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Add project notes"}
+
+  - id: u2-diff-unstaged
+    instruction: "What unstaged changes exist in the working directory at {root}?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "CHANGELOG_PENDING"}
+
+  - id: u2-diff-staged
+    instruction: "What changes are currently staged for commit in the git repository at {root}?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "STAGED_FEATURE_FLAG"}
+
+  - id: u2-branch-list
+    instruction: "What branches exist in the git repository at {root}?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "feature-x"}
+
+  - id: u2-show-head
+    instruction: "Show the contents of the most recent commit (HEAD) in the git repository at {root}."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Add helper function"}
+
+  - id: u2-add-draft
+    instruction: "Stage the file draft.txt for commit in the git repository at {root}."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "staged successfully"}
+
+  - id: u2-reset
+    instruction: "Unstage all currently staged changes in the git repository at {root}."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "reset"}
+
+  - id: u2-create-branch
+    instruction: "Create a new branch called release-1 in the git repository at {root}."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "release-1"}
+
+  - id: u2-commit
+    instruction: >-
+      Commit the currently staged changes in the git repository at {root}
+      with the message 'Apply pending updates'.
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "committed successfully"}

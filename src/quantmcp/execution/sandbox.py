@@ -47,7 +47,17 @@ def sandbox_instance(
     failed = False
     try:
         if fixture_dir is not None:
-            shutil.copytree(fixture_dir, instance_root, dirs_exist_ok=True)
+            if fixture_dir.is_file():
+                # Some fixtures (e.g. the U2 git tier) are shipped as an
+                # archive rather than a plain directory: a fixture that is
+                # itself a git repository can't be committed as a real .git
+                # directory inside this project's own repository (git treats
+                # a nested .git as an embedded repository and stores only a
+                # gitlink, not its contents), so it's packed as a tarball and
+                # extracted fresh per instance instead.
+                shutil.unpack_archive(str(fixture_dir), str(instance_root))
+            else:
+                shutil.copytree(fixture_dir, instance_root, dirs_exist_ok=True)
         yield instance_root
     except Exception:
         failed = True

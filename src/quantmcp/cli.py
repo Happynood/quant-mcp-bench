@@ -49,6 +49,15 @@ def _server_command_for_tier(tier: str) -> tuple[str, list[str], Path | None, Pa
             _PACKAGE_ROOT / "tasks" / "fixtures" / "u1_filesystem",
             _PACKAGE_ROOT / "tasks" / "fixtures" / "u1_filesystem_tasks.yaml",
         )
+    if tier == "git":
+        from quantmcp.servers.git import ARGS_TEMPLATE, COMMAND
+
+        return (
+            COMMAND,
+            list(ARGS_TEMPLATE),
+            _PACKAGE_ROOT / "tasks" / "fixtures" / "u2_git" / "repo.tar.gz",
+            _PACKAGE_ROOT / "tasks" / "fixtures" / "u2_git_tasks.yaml",
+        )
     raise click.ClickException(f"Server tier {tier!r} is not implemented yet (spec §10 roadmap)")
 
 

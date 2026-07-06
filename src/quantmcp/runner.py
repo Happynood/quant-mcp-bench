@@ -154,11 +154,14 @@ async def run_eval_async(
 
     metrics = compute_metrics(outcomes)
 
-    fixture_files = (
-        [p for p in fixture_dir.rglob("*") if p.is_file()]
-        if fixture_dir is not None and fixture_dir.exists()
-        else []
-    )
+    fixture_files: list[Path] = []
+    if fixture_dir is not None and fixture_dir.exists():
+        # Archive-shaped fixtures (e.g. the U2 git tier's tarball) are a
+        # single file, not a directory to walk.
+        if fixture_dir.is_file():
+            fixture_files = [fixture_dir]
+        else:
+            fixture_files = [p for p in fixture_dir.rglob("*") if p.is_file()]
     fixture_sha = compute_fixture_sha256(fixture_files)
     manifest = collect_manifest(
         config_path, cfg, fixture_sha256=fixture_sha, mcp_server_version=mcp_server_version
