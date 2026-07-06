@@ -186,9 +186,22 @@ def run_cmd(
 @click.option("--quants", required=True, help="Comma-separated quant levels")
 @click.option("--servers", default="u0", help="Comma-separated server tiers")
 def sweep_cmd(model: str, quants: str, servers: str) -> None:
-    """Sweep model x quant x server combinations."""
-    click.echo(f"[sweep stub] model={model} quants={quants} servers={servers}")
-    click.echo("Full sweep implementation lands in Phase 1 (spec §10).")
+    """Sweep model x quant x server combinations (not yet implemented).
+
+    Every real sweep in this project so far (see docs/RUN_REAL.md) was
+    produced with one `quantmcp run` invocation per (quant, tier) config
+    file in a shell loop, since GGUF filename conventions aren't uniform
+    across quants/models (e.g. "fp16" is sometimes named "bf16.gguf") and
+    a single --model template can't resolve that reliably yet. This
+    command is a placeholder for a future convenience wrapper around that
+    same pattern, not a different code path.
+    """
+    click.echo(f"[sweep not yet implemented] model={model} quants={quants} servers={servers}")
+    click.echo(
+        "Run one 'quantmcp run --config <quant>.yaml' per (quant, tier) instead "
+        "-- see docs/RUN_REAL.md for the exact commands used to produce every "
+        "real result in this repository."
+    )
 
 
 @main.command("compare")
