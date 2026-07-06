@@ -80,13 +80,22 @@ async def _run_one_instance(
     ) as instance_root:
         env = dict(server_env or {})
         env.setdefault("QUANTMCP_U0_ROOT", str(instance_root))
+        # Some reference servers (e.g. filesystem) take their allowed root as a
+        # positional CLI arg rather than an env var/cwd, and that root is only
+        # known once the sandbox instance exists — resolve the "{root}"
+        # placeholder here rather than in the static per-tier command table.
+        resolved_args = [a.replace("{root}", str(instance_root)) for a in server_args]
         async with MCPServerHandle(
-            server_command, server_args, env=env, cwd=instance_root
+            server_command, resolved_args, env=env, cwd=instance_root
         ) as handle:
             tools = await handle.list_tools()
             tool_schemas = {t.name: t.inputSchema for t in tools}
             openai_tools = tools_to_openai_spec(tools)
-            messages = [{"role": "user", "content": task.instruction}]
+            # Task instructions may reference "{root}" so a task can tell the
+            # model the absolute path it's allowed to operate in, mirroring how
+            # a real client would surface the server's allowed directories.
+            instruction = task.instruction.format(root=str(instance_root))
+            messages = [{"role": "user", "content": instruction}]
 
             latency_ms = 0.0
             peak_vram_mb: float | None = None

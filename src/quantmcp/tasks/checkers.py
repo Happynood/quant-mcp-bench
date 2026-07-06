@@ -38,7 +38,33 @@ def call_result_number_equals(state: SandboxState, index: int, value: float) -> 
     return False
 
 
+def call_result_contains(state: SandboxState, index: int, contains: str) -> bool:
+    """Pass if the `index`-th executed call succeeded and its text content
+    contains `contains` — for read-only tools (list_directory, search_files,
+    read_text_file, ...) whose effect is only visible in the returned
+    content, not in sandbox filesystem state."""
+    if index >= len(state.results):
+        return False
+    result = state.results[index]
+    if not result.ok:
+        return False
+    content = getattr(result.raw_result, "content", None) or []
+    for item in content:
+        text = getattr(item, "text", None)
+        if text is not None and contains in text:
+            return True
+    return False
+
+
+def dir_exists(state: SandboxState, dirname: str) -> bool:
+    """Pass if `dirname` exists as a directory under the sandbox root."""
+    path = state.root / dirname
+    return path.is_dir()
+
+
 CHECKERS: dict[str, Any] = {
     "file_contains": file_contains,
     "call_result_number_equals": call_result_number_equals,
+    "call_result_contains": call_result_contains,
+    "dir_exists": dir_exists,
 }

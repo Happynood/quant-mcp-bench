@@ -30,9 +30,8 @@ def main() -> None:
 def _server_command_for_tier(tier: str) -> tuple[str, list[str], Path | None, Path]:
     """Return (command, args, fixture_dir, default_tasks_file) for a server tier.
 
-    Only "u0" (the in-repo toy FastMCP server) is wired in Phase 0. U1-U4
-    are added in later phases (spec §10) once their sandboxing/task fixtures
-    exist.
+    `args` may contain the literal placeholder "{root}", resolved by
+    runner.py once a task instance's sandbox directory actually exists.
     """
     if tier == "u0":
         return (
@@ -40,6 +39,15 @@ def _server_command_for_tier(tier: str) -> tuple[str, list[str], Path | None, Pa
             ["-m", "quantmcp.servers.toy"],
             None,
             _PACKAGE_ROOT / "tasks" / "fixtures" / "u0_tasks.yaml",
+        )
+    if tier == "filesystem":
+        from quantmcp.servers.filesystem import ARGS_TEMPLATE, COMMAND
+
+        return (
+            COMMAND,
+            list(ARGS_TEMPLATE),
+            _PACKAGE_ROOT / "tasks" / "fixtures" / "u1_filesystem",
+            _PACKAGE_ROOT / "tasks" / "fixtures" / "u1_filesystem_tasks.yaml",
         )
     raise click.ClickException(f"Server tier {tier!r} is not implemented yet (spec §10 roadmap)")
 

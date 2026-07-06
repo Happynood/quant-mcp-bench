@@ -5,6 +5,7 @@ from pathlib import Path
 from quantmcp.execution.dispatcher import ExecutionResult
 from quantmcp.parsing.base import ParsedCall
 from quantmcp.tasks.base import SandboxState
+from quantmcp.tasks.checkers import call_result_contains, dir_exists
 from quantmcp.tasks.loader import load_tasks
 
 U0_TASKS_FILE = (
@@ -44,3 +45,26 @@ def test_loaded_write_note_checker(tmp_path):
 
     (tmp_path / "note.txt").write_text("something else")
     assert task.checker(state) is False
+
+
+def test_call_result_contains_checker():
+    call = ParsedCall(name="list_directory", arguments={"path": "/x"})
+
+    class _Content:
+        text = "[FILE] todo.txt\n[FILE] draft.md"
+
+    class _Raw:
+        content = [_Content()]
+
+    result = ExecutionResult(call=call, ok=True, raw_result=_Raw())
+    state = SandboxState(root=Path("/nonexistent"), results=[result])
+    assert call_result_contains(state, index=0, contains="todo.txt") is True
+    assert call_result_contains(state, index=0, contains="nope.txt") is False
+    assert call_result_contains(state, index=5, contains="todo.txt") is False
+
+
+def test_dir_exists_checker(tmp_path):
+    state = SandboxState(root=tmp_path, results=[])
+    assert dir_exists(state, dirname="missing") is False
+    (tmp_path / "present").mkdir()
+    assert dir_exists(state, dirname="present") is True

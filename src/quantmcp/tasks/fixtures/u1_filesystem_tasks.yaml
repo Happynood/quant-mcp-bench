@@ -1,0 +1,83 @@
+# U1 filesystem-tier task fixture (spec §5). Fixture dir: u1_filesystem/.
+# {root} in an instruction is substituted at runtime with the absolute path
+# of that instance's sandboxed copy of the fixture (the real allowed
+# directory the live filesystem server was launched with) — every real tool
+# call needs an absolute path within that directory, since the server has no
+# other way to know where it's allowed to operate. All checks below were
+# verified against a real, locally-launched copy of
+# @modelcontextprotocol/server-filesystem before being written (its exact
+# response text is not otherwise documented).
+tasks:
+  - id: u1-read-todo
+    instruction: "Read the contents of the file at {root}/notes/todo.txt using the read_text_file tool."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "buy milk"}
+
+  - id: u1-write-hello
+    instruction: "Use the write_file tool to create a new file at {root}/hello.txt containing exactly the text: hello world"
+    checker:
+      name: file_contains
+      args: {filename: hello.txt, contains: "hello world"}
+
+  - id: u1-create-dir
+    instruction: "Use the create_directory tool to create a new directory at {root}/new_folder."
+    checker:
+      name: dir_exists
+      args: {dirname: new_folder}
+
+  - id: u1-list-notes
+    instruction: "Use the list_directory tool to list the contents of the directory {root}/notes."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "todo.txt"}
+
+  - id: u1-list-sizes-data
+    instruction: "Use the list_directory_with_sizes tool to list the contents of {root}/data with file sizes."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "numbers.csv"}
+
+  - id: u1-search-md
+    instruction: "Use the search_files tool starting at {root} with pattern '**/*.md' to find all Markdown files."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "draft.md"}
+
+  - id: u1-directory-tree
+    instruction: "Use the directory_tree tool on {root} to get a recursive JSON listing of its contents."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "numbers.csv"}
+
+  - id: u1-get-file-info
+    instruction: "Use the get_file_info tool to get metadata about the file {root}/config.json."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "isFile: true"}
+
+  - id: u1-move-file
+    instruction: "Use the move_file tool to move {root}/notes/draft.md to {root}/notes/draft_renamed.md."
+    checker:
+      name: file_contains
+      args: {filename: "notes/draft_renamed.md", contains: "This is a draft document."}
+
+  - id: u1-list-allowed-dirs
+    instruction: "Use the list_allowed_directories tool to see which directories you can access."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Allowed directories:"}
+
+  - id: u1-edit-file
+    instruction: >-
+      Use the edit_file tool on {root}/notes/todo.txt to replace the text
+      'buy milk' with 'buy oat milk'.
+    checker:
+      name: file_contains
+      args: {filename: "notes/todo.txt", contains: "buy oat milk"}
+
+  - id: u1-read-multiple
+    instruction: "Use the read_multiple_files tool to read both {root}/notes/todo.txt and {root}/notes/draft.md at once."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "buy milk"}
