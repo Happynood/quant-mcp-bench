@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib
 import os
 import platform
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -60,10 +61,15 @@ def _collect_gpu_info() -> GpuInfo | None:
     torch_cuda_device_name: str | None = None
 
     try:
+        # "cuda_version" is not a valid --query-gpu field on every driver
+        # release (it's populated in nvidia-smi's plain-text banner, not the
+        # CSV query fields, on some versions) — query the fields that are
+        # universally supported here and fetch cuda_version separately below
+        # so one unsupported field doesn't blank out the whole fingerprint.
         r = subprocess.run(
             [
                 "nvidia-smi",
-                "--query-gpu=name,driver_version,cuda_version,memory.total",
+                "--query-gpu=name,driver_version,memory.total",
                 "--format=csv,noheader,nounits",
             ],
             capture_output=True,
@@ -72,12 +78,21 @@ def _collect_gpu_info() -> GpuInfo | None:
         )
         if r.returncode == 0 and r.stdout.strip():
             parts = [p.strip() for p in r.stdout.strip().splitlines()[0].split(",")]
-            if len(parts) >= 4:
-                name, driver_version, cuda_version = parts[0], parts[1], parts[2]
+            if len(parts) >= 3:
+                name, driver_version = parts[0], parts[1]
                 try:
-                    vram_total_mb = int(parts[3])
+                    vram_total_mb = int(parts[2])
                 except ValueError:
                     pass
+    except Exception:
+        pass
+
+    try:
+        r = subprocess.run(["nvidia-smi"], capture_output=True, text=True, timeout=10)
+        if r.returncode == 0:
+            match = re.search(r"CUDA Version:\s*([\d.]+)", r.stdout)
+            if match:
+                cuda_version = match.group(1)
     except Exception:
         pass
 

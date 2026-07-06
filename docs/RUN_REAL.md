@@ -68,7 +68,7 @@ for QUANT_FILE in Q4_K_M Q5_K_M Q8_0 bf16; do
 done
 ```
 
-## What has actually been run (Phase 1)
+## What has actually been run (Phase 1, superseded by Phase 2 below)
 
 Hardware: RTX 3050 Laptop GPU, 4 GB VRAM (3772 MiB reported free by
 `ggml_cuda_init`), driver 595.71.05, CUDA 13.2 (driver-reported; the
@@ -83,51 +83,88 @@ quant-toolcall-bench's own convention), `llama-cpp` backend,
 `filesystem` MCP server tier, 12 hand-written tasks, greedy decoding
 (temperature 0), single seed (0), single repeat.
 
+The first Phase 1 run of this sweep used task instructions that explicitly
+named the tool to call for every task (e.g. "Use the `read_text_file` tool
+to read..."). That run's numbers (SVR-MCP 0.917-1.000 across all four
+quants) are superseded by the Phase 2 re-run below and are no longer
+reported here — see "Task design: tool selection must stay in scope" for
+why.
+
+## Task design: tool selection must stay in scope (Phase 2 correction)
+
+QuantCall's BFCL-based SVR for Qwen3-0.6B is fp16=0.877, Q8_0=0.878,
+Q5_K_M=0.878, Q4_K_M=0.873 (free decoding, T1+T6). The first Phase 1 U1
+sweep came back noticeably higher (0.917-1.000) and, per this project's own
+cross-check requirement, that gap was investigated before being trusted: it
+was **not a harness bug**, it was a task-design difference. BFCL's
+natural-language queries never name the function to call, so its SVR also
+captures *tool-selection* difficulty. Every one of the original 12 U1 tasks
+explicitly said "use the `<tool_name>` tool," which removed tool selection
+and left only argument-construction — a substantially easier structural-
+validity bar than BFCL's.
+
+Fix: `src/quantmcp/tasks/fixtures/u1_filesystem_tasks.yaml` was rewritten so
+every instruction is naturalistic and never names the tool (e.g. "There's a
+to-do list at {root}/notes/todo.txt. What does it say?" instead of "Use the
+`read_text_file` tool..."). All 12 checkers were re-verified against the
+exact intended call before re-running anything
+(`tests/test_servers_filesystem.py::test_all_u1_tasks_pass_with_the_intended_call`),
+then the full sweep was re-run.
+
+While investigating this, a second, unrelated bug was found and fixed:
+`hardware.py`'s GPU fingerprint collection queried `nvidia-smi
+--query-gpu=...,cuda_version,...`, but this driver's `nvidia-smi` (595.71.05)
+rejects `cuda_version` as a queryable CSV field (it only appears in the
+plain-text banner on this release) — the query failed outright and a bare
+`except Exception: pass` silently discarded it, so every manifest produced
+so far (including the original Phase 1 files) recorded `"gpu": null` despite
+genuinely running on the GPU. Fixed by querying only the fields this driver
+does support via CSV and parsing `cuda_version` separately from the
+plain-text banner. Regression-tested in `tests/test_hardware.py`. The
+numbers below are the first ones with a real, non-null GPU fingerprint.
+
+## What has actually been run (Phase 2 re-run, current)
+
+Same config/hardware/hyperparameters as above, only the task instructions
+and the GPU-fingerprint fix changed.
+
 | Quant | SVR-MCP | TSR | Peak VRAM (GB) |
 |---|---|---|---|
-| fp16 (bf16.gguf) | 1.000 | 0.917 | 1.995 |
-| Q8_0 | 0.917 | 0.917 | 1.474 |
-| Q5_K_M | 0.917 | 0.917 | 1.292 |
-| Q4_K_M | 1.000 | 0.917 | 1.247 |
+| fp16 (bf16.gguf) | 0.833 | 0.750 | 1.995 |
+| Q8_0 | 0.833 | 0.667 | 1.474 |
+| Q5_K_M | 0.833 | 0.750 | 1.292 |
+| Q4_K_M | 0.833 | 0.667 | 1.247 |
 
-Raw results + manifests: `results/qwen3-0.6b-u1/*.result.json` /
-`*.manifest.json` (git commit, config hash, fixture hash, MCP server
-package version `0.2.0` for `@modelcontextprotocol/server-filesystem`,
-hardware fingerprint — all captured automatically, not hand-entered).
+These SVR-MCP numbers (0.833 flat across all four quants) now sit close to
+QuantCall's published BFCL SVR range (0.873-0.878) rather than well above
+it — consistent with the task-design fix actually closing the gap, not just
+moving it. TSR (execution success) is lower than or equal to SVR-MCP at
+every quant, as expected: TSR additionally requires the executed call to
+produce the *correct* outcome, not just a schema-valid one. TSR varies by
+one task (0.667 vs 0.750, i.e. 8/12 vs 9/12) between quants in a way that
+does not track monotonically with precision — at n=12, single-seed,
+single-repeat, this is consistent with the GPU decode non-determinism
+already documented below, not a precision-ordered effect.
 
-### Honest scope limitations of this first result
+Raw results + manifests: `results/qwen3-0.6b-u1/*.result.json` (each embeds
+its own manifest: git commit, config hash, fixture hash, MCP server package
+version `0.2.0` for `@modelcontextprotocol/server-filesystem`, hardware
+fingerprint including GPU name/driver/CUDA version — all captured
+automatically, not hand-entered).
+
+### Honest scope limitations of this result
 
 1. **n=12, single seed, single repeat.** This is a plumbing-proving MVP
    result (spec's Phase 1 goal), not a statistically powered sweep. No
    bootstrap CI is reported here for that reason — at n=12 a CI would be
    too wide to say anything the raw numbers don't already say. Phase 3 adds
    bootstrap CI across a larger task set and multiple seeds/repeats.
-2. **Not directly comparable to the published QuantCall BFCL SVR numbers.**
-   QuantCall's BFCL-based SVR for Qwen3-0.6B is fp16=0.877, Q8_0=0.878,
-   Q5_K_M=0.878, Q4_K_M=0.873 (free decoding, T1+T6) — noticeably lower than
-   the SVR-MCP numbers above. This was investigated before being written
-   here (per the cross-check requirement): it is **not a harness bug**. It
-   reflects a genuine task-design difference, not schema realism alone:
-   BFCL's natural-language queries never name the function to call, so SVR
-   there also captures *tool selection* difficulty. Every one of this
-   project's 12 U1 tasks explicitly says "use the `<tool_name>` tool," which
-   removes tool selection and leaves only argument-construction — a
-   substantially easier structural-validity bar. This was confirmed by
-   manually driving the live `filesystem` server with the exact intended
-   call for all 12 tasks (`tests/test_servers_filesystem.py`) and by
-   observing run-to-run GPU decode variance directly (a repeated Q4_K_M run
-   produced 12/12 passing where the recorded sweep run got 11/12 — greedy
-   decoding on GPU is not perfectly bit-deterministic across process
-   invocations due to non-associative floating-point reduction order in
-   parallel kernels; this is expected, not a bug, and is exactly why
+2. **GPU greedy decoding is not perfectly bit-deterministic run-to-run** —
+   a repeated Q4_K_M run in Phase 1 produced 12/12 passing where the
+   recorded sweep run got 11/12 (non-associative floating-point reduction
+   order in parallel GPU kernels). Expected, not a bug, and exactly why
    multiple seeds/repeats and bootstrap CI matter for any claim stronger
-   than "plumbing works").
-   **Implication for H1/CBC (Phase 2):** the Cross-Benchmark Consistency
-   comparison against QuantCall's numbers needs either naturalistic (tool
-   name withheld) task instructions to be a fair difficulty match, or an
-   explicit disclosure that SVR-MCP as measured here is not the same
-   difficulty axis as BFCL's SVR. This is flagged now as the first concrete
-   design decision Phase 2 needs to make before computing CBC for real.
+   than "plumbing works."
 3. **TSR is currently execution-success only for this tool corpus** — all
    12 tasks are single-call, no multi-step chaining yet (matches spec's
    "single/few-step, cheap-to-execute tasks" scope for tractability on a

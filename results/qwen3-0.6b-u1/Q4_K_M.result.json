@@ -1,9 +1,9 @@
 {
   "n": 12,
-  "svr_mcp": 1.0,
-  "tsr": 0.9166666666666666,
-  "svr": 1.0,
-  "total_latency_ms": 10694.764836000104,
+  "svr_mcp": 0.8333333333333334,
+  "tsr": 0.6666666666666666,
+  "svr": 0.8333333333333334,
+  "total_latency_ms": 12483.54576499969,
   "vram_gb": 1.2470703125,
   "config": {
     "model": "~/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
@@ -17,8 +17,8 @@
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-06T22:01:46.130335+00:00",
-    "git_commit": "bc68a2cec05487f7e22a17b64b20f705e71ecbd7",
+    "timestamp": "2026-07-06T22:23:17.585465+00:00",
+    "git_commit": "ca33d99de256d59b0ed062d919c15ba0ba42dfd4",
     "git_dirty": true,
     "config_sha256": "0e2d162f9a151334b2251423a663cb6d936aeb7b25c1767dcfe9b389b8071f00",
     "fixture_sha256": "05f4271101928c527ef92ab3da7013314c2bf97e1e687ddff2ce6dbb249e924c",
@@ -33,6 +33,13 @@
     "platform_info": "Linux-7.0.0-27-generic-x86_64-with-glibc2.43",
     "cpu_model": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
     "cpu_count": 12,
-    "gpu": null
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "driver_version": "595.71.05",
+      "cuda_version": "13.2",
+      "vram_total_mb": 4096,
+      "torch_cuda_available": null,
+      "torch_cuda_device_name": null
+    }
   }
 }
