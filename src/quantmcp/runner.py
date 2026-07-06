@@ -51,7 +51,9 @@ class RunResult:
             "svr_mcp_ci": list(self.metrics.svr_mcp_ci),
             "tsr_ci": list(self.metrics.tsr_ci),
             # "svr" alias kept for report/leaderboard.py (vendored, BFCL-shaped
-            # column reader) until it's extended for MCP metrics in Phase 3.
+            # column reader) — left as-is per the reuse rule rather than
+            # retrofitted; report/mcp_leaderboard.py is the MCP-native
+            # leaderboard this project actually uses (`quantmcp leaderboard`).
             "svr": self.metrics.svr_mcp,
             "total_latency_ms": self.total_latency_ms,
             "vram_gb": (self.peak_vram_mb / 1024.0) if self.peak_vram_mb is not None else None,

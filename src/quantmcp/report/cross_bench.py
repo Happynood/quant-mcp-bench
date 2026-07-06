@@ -43,8 +43,9 @@ def compute_cbc(result_files: list[Path], bfcl_results_path: Path) -> CbcResult:
     }
 
     # A result file's server tier isn't distinguished here — every tier
-    # provided is pooled into one SVR-MCP per (model, quant); the per-server
-    # breakdown is a Phase 3 deliverable (spec §4.7).
+    # provided is pooled into one SVR-MCP per (model, quant) for the CBC
+    # computation itself; the per-server breakdown lives separately in
+    # report/mcp_leaderboard.py (spec §4.7), not in this pooled number.
     pooled: dict[tuple[str, str], list[tuple[int, float]]] = defaultdict(list)
     for path in result_files:
         data = json.loads(Path(path).read_text())

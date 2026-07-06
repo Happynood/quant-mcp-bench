@@ -1,9 +1,9 @@
-"""CLI skeleton (spec §6.3), modeled on quant-toolcall-bench's `quantcall` CLI
-shape but not vendored verbatim: quantmcp's `run` command launches a sandboxed
-MCP server + task fixture instead of sampling a BFCL tier. `sweep`,
-`cross-bench`, and the full `leaderboard`/`pareto` wiring are stubs until
-Phase 1+ (see spec §10 roadmap) — this mirrors quant-toolcall-bench's own
-Phase 0 CLI, which stubs `pareto`/`sweep` the same way.
+"""CLI (spec §6.3), modeled on quant-toolcall-bench's `quantcall` CLI shape
+but not vendored verbatim: quantmcp's `run` command launches a sandboxed
+MCP server + task fixture instead of sampling a BFCL tier. `run`,
+`cross-bench`, `leaderboard`, `compare`, and `validate-config` are fully
+implemented; `sweep` remains a stub (see its own docstring for why and
+what to use instead).
 """
 
 from __future__ import annotations

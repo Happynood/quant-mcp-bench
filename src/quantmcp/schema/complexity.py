@@ -5,9 +5,10 @@ SCI = a1*z(depth) + a2*z(prop_count) + a3*1[oneOf/anyOf present] + a4*z(desc_len
 z-normalized across the full tool corpus passed to compute_sci, default
 alpha_k = 0.25. This is what operationalizes "MCP schemas are messier" for
 the H2 regression (does degradation correlate with SCI independent of quant
-level) — exercised fully once Phase 3 has enough tool schemas across tiers
-to make the regression meaningful, but the metric itself has no execution
-dependency so it's implemented now.
+level) — computed across the 3 real tiers so far (see docs/RUN_REAL.md),
+though a real regression/correlation still needs more tiers than that to
+mean anything; the metric itself has no execution dependency, which is why
+it could be implemented well before enough tiers existed to use it fully.
 """
 
 from __future__ import annotations
