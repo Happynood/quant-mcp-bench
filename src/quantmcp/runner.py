@@ -80,6 +80,7 @@ async def _run_one_instance(
     ) as instance_root:
         env = dict(server_env or {})
         env.setdefault("QUANTMCP_U0_ROOT", str(instance_root))
+        env.setdefault("QUANTMCP_U3_ROOT", str(instance_root))
         # Some reference servers (e.g. filesystem) take their allowed root as a
         # positional CLI arg rather than an env var/cwd, and that root is only
         # known once the sandbox instance exists — resolve the "{root}"

@@ -1,0 +1,86 @@
+# U3 sqlite-tier task fixture (spec §5). The official reference `sqlite`
+# server is not currently present in github.com/modelcontextprotocol/servers
+# (checked at commit d31124c, 2026-07-06) — see servers/sqlite_server.py's
+# module docstring for the disclosed fallback used instead.
+# Fixture: u3_sqlite/fixture.db — two tables, "employees" (3 rows) and
+# "inventory" (2 rows), deterministic content.
+# {root} is substituted at runtime with the sandboxed copy's absolute path;
+# every tool operates on {root}/fixture.db via $QUANTMCP_U3_ROOT, so no task
+# instruction actually needs to mention the path (unlike the filesystem/git
+# tiers, whose tools take an explicit path argument).
+# Instructions are phrased naturalistically and never name the tool to
+# call, for the same reason as the U1/U2 tasks.
+tasks:
+  - id: u3-list-tables
+    instruction: "What tables exist in this database?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "employees"}
+
+  - id: u3-describe-employees
+    instruction: "What columns does the employees table have?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "salary"}
+
+  - id: u3-describe-inventory
+    instruction: "What columns does the inventory table have?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "quantity"}
+
+  - id: u3-query-engineering
+    instruction: "Which employees work in the Engineering department?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Alice Chen"}
+
+  - id: u3-query-salary
+    instruction: "What is Carla Diaz's salary?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "72000"}
+
+  - id: u3-query-widget-count
+    instruction: "How many widgets are currently in inventory?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "42"}
+
+  - id: u3-update-gadget-quantity
+    instruction: "Update the inventory so the gadget quantity becomes 100."
+    checker:
+      name: sqlite_query_scalar
+      args:
+        db_filename: fixture.db
+        query: "SELECT quantity FROM inventory WHERE item = 'gadget'"
+        expected: "100"
+
+  - id: u3-give-raise
+    instruction: "Give Bob Martins a raise: set his salary to 90000."
+    checker:
+      name: sqlite_query_scalar
+      args:
+        db_filename: fixture.db
+        query: "SELECT salary FROM employees WHERE name = 'Bob Martins'"
+        expected: "90000"
+
+  - id: u3-delete-widget
+    instruction: "Remove widget from the inventory entirely."
+    checker:
+      name: sqlite_query_scalar
+      args:
+        db_filename: fixture.db
+        query: "SELECT COUNT(*) FROM inventory WHERE item = 'widget'"
+        expected: "0"
+
+  - id: u3-insert-employee
+    instruction: >-
+      Add a new employee named Dana Kim in the Marketing department with a
+      salary of 65000.
+    checker:
+      name: sqlite_query_scalar
+      args:
+        db_filename: fixture.db
+        query: "SELECT salary FROM employees WHERE name = 'Dana Kim'"
+        expected: "65000"

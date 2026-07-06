@@ -58,6 +58,13 @@ def _server_command_for_tier(tier: str) -> tuple[str, list[str], Path | None, Pa
             _PACKAGE_ROOT / "tasks" / "fixtures" / "u2_git" / "repo.tar.gz",
             _PACKAGE_ROOT / "tasks" / "fixtures" / "u2_git_tasks.yaml",
         )
+    if tier == "sqlite":
+        return (
+            sys.executable,
+            ["-m", "quantmcp.servers.sqlite_server"],
+            _PACKAGE_ROOT / "tasks" / "fixtures" / "u3_sqlite",
+            _PACKAGE_ROOT / "tasks" / "fixtures" / "u3_sqlite_tasks.yaml",
+        )
     raise click.ClickException(f"Server tier {tier!r} is not implemented yet (spec §10 roadmap)")
 
 

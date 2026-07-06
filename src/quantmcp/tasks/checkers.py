@@ -6,6 +6,7 @@ resolves a `{name: ..., args: {...}}` block into `functools.partial(CHECKERS[nam
 
 from __future__ import annotations
 
+import sqlite3
 from typing import Any
 
 from quantmcp.tasks.base import SandboxState
@@ -62,9 +63,33 @@ def dir_exists(state: SandboxState, dirname: str) -> bool:
     return path.is_dir()
 
 
+def sqlite_query_scalar(state: SandboxState, db_filename: str, query: str, expected: str) -> bool:
+    """Pass if `query` against the sandboxed sqlite db at `db_filename`
+    returns a single row whose first column, stringified, equals `expected`.
+
+    Unlike `call_result_contains` (which only inspects the tool's own return
+    text), this inspects the database's actual post-execution state
+    directly — needed for write_query tasks, whose success text ("N row(s)
+    affected") doesn't reveal whether the *correct* row was actually
+    changed.
+    """
+    path = state.root / db_filename
+    if not path.exists():
+        return False
+    conn = sqlite3.connect(path)
+    try:
+        row = conn.execute(query).fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        return False
+    return str(row[0]) == expected
+
+
 CHECKERS: dict[str, Any] = {
     "file_contains": file_contains,
     "call_result_number_equals": call_result_number_equals,
     "call_result_contains": call_result_contains,
     "dir_exists": dir_exists,
+    "sqlite_query_scalar": sqlite_query_scalar,
 }
