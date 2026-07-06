@@ -254,61 +254,157 @@ SVR-MCP at lower precision), consistent with the same schema-echo-vs-flat-
 call failure-mode shift described above rather than a filesystem-tier-
 specific artifact.
 
+## U3 sqlite tier (Phase 3)
+
+The official reference `sqlite` MCP server is not present in the current
+`github.com/modelcontextprotocol/servers` list (checked again at commit
+`d31124c`, 2026-07-06 — only `everything, fetch, filesystem, git, memory,
+sequentialthinking, time` are maintained there). Per this project's
+disclosed-fallback convention, U3 uses a minimal self-written FastMCP
+wrapper (`servers/sqlite_server.py`) over a committed fixture `.db` file
+instead, exposing the same tool names (`list_tables`/`describe_table`/
+`read_query`/`write_query`) the reference server historically had. 10
+naturalistic tasks against a 2-table (`employees`, `inventory`) fixture.
+
+| Model | Quant | SVR-MCP | TSR |
+|---|---|---|---|
+| Qwen3-0.6B | fp16 | 0.500 | 0.400 |
+| Qwen3-0.6B | Q8_0 | 0.500 | 0.300 |
+| Qwen3-0.6B | Q5_K_M | 0.400 | 0.400 |
+| Qwen3-0.6B | Q4_K_M | 0.800 | 0.500 |
+| Llama-3.2-1B | fp16 | 0.200 | 0.100 |
+| Llama-3.2-1B | Q8_0 | 0.200 | 0.100 |
+| Llama-3.2-1B | Q5_K_M | 0.100 | 0.100 |
+| Llama-3.2-1B | Q4_K_M | 0.300 | 0.100 |
+
+Both models score markedly worse here than on U1/U2, and the fp16 raw
+output was inspected directly to confirm this is genuine model behavior on
+this specific tool surface, not a harness bug. Two new failure modes appear
+that filesystem/git tasks didn't trigger:
+
+- **Hallucinated schema instead of a tool call.** Asked "What tables exist
+  in this database?", Qwen3-0.6B fp16 answered directly with a fabricated,
+  plausible-sounding schema ("users", "orders", "products") — none of which
+  exist in the real fixture — instead of calling the zero-argument
+  `list_tables` tool it had just been given.
+- **Outright refusal on tasks that need a query.** Asked "What is Carla
+  Diaz's salary?" or "How many widgets are currently in inventory?", the
+  same model responded that it could not answer without more information,
+  rather than recognizing that `read_query` could resolve the question.
+
+Both are genuine capability gaps at this scale on this particular
+ambiguous-natural-language-to-SQL task shape, not a parser or schema
+mismatch: the model *did* call tools correctly and validly for the more
+directly-worded tasks (`describe_table`, `write_query` with syntactically
+valid SQL) — it just sometimes hallucinated non-existent table/column
+names in the generated SQL (e.g. `UPDATE salaries SET salary = ... WHERE
+employee_id = 1` against a schema with no `salaries` table and no
+`employee_id` column), which is exactly the SVR-MCP/TSR split doing its
+job: the call is schema-valid (a `query: string` argument, structurally
+fine) but execution-wrong.
+
+Raw results + manifests: `results/{qwen3-0.6b,llama3.2-1b}-u3/*.result.json`.
+
 ## Cross-Benchmark Consistency (CBC, spec §4.5) and the SVR-vs-TSR gap (H4)
 
 CBC asks: does QuantCall's BFCL-measured quantization degradation pattern
 predict what happens on real MCP schemas? It is computed as the Spearman
 correlation between each (model, quant) pair's BFCL SVR delta (vs. that
 model's own fp16 baseline) and its SVR-MCP delta, where SVR-MCP is pooled
-across both U1 and U2 result files (weighted by task count):
+across all three tiers' result files (weighted by task count):
 
 ```
 quantmcp cross-bench results/*/*.result.json --bfcl-results docs/bfcl_reference_svr.json
 ```
 
-| Model | Quant | Δ SVR bfcl | Δ SVR-MCP (pooled U1+U2) |
+| Model | Quant | Δ SVR bfcl | Δ SVR-MCP (pooled U1+U2+U3) |
 |---|---|---|---|
-| Llama-3.2-1B | Q4_K_M | -0.047 | +0.227 |
-| Llama-3.2-1B | Q5_K_M | -0.014 | +0.227 |
+| Llama-3.2-1B | Q4_K_M | -0.047 | +0.188 |
+| Llama-3.2-1B | Q5_K_M | -0.014 | +0.125 |
 | Llama-3.2-1B | Q8_0 | -0.022 | 0.000 |
-| Qwen3-0.6B | Q4_K_M | -0.004 | 0.000 |
-| Qwen3-0.6B | Q5_K_M | +0.001 | 0.000 |
-| Qwen3-0.6B | Q8_0 | +0.001 | -0.045 |
+| Qwen3-0.6B | Q4_K_M | -0.004 | +0.094 |
+| Qwen3-0.6B | Q5_K_M | +0.001 | -0.031 |
+| Qwen3-0.6B | Q8_0 | +0.001 | -0.031 |
 
-**CBC = -0.720 (n=6 pairs).** This is the opposite of a high, significant
-positive rho — QuantCall's BFCL-measured degradation pattern does **not**
-carry over to real MCP tool schemas for these two families at this sample
-size. The correlation is driven almost entirely by Llama-3.2-1B: BFCL shows
-its largest quantization drop at Q4_K_M, while our MCP measurement shows
-its largest *increase* at Q4_K_M/Q5_K_M — which, per the raw-output
-investigation above, is not really "the model getting better at tool use
-under quantization" but a shift between two different failure modes
-(unparseable schema-echo vs. a flatter, sometimes-correct call shape).
+**CBC = -0.824 (n=6 pairs)**, strengthening (more negative) from Phase 2's
+-0.720 now that U3 is included. This remains the opposite of a high,
+significant positive rho — QuantCall's BFCL-measured degradation pattern
+does **not** carry over to real MCP tool schemas for these two families at
+this sample size. The correlation is driven almost entirely by
+Llama-3.2-1B: BFCL shows its largest quantization drop at Q4_K_M, while our
+MCP measurement shows its largest *increase* at Q4_K_M/Q5_K_M — which, per
+the raw-output investigation in the family-contrast section above, is not
+really "the model getting better at tool use under quantization" but a
+shift between two different failure modes (unparseable schema-echo vs. a
+flatter, sometimes-correct call shape).
 
 **This should be read as a preliminary, directional finding, not a
 statistically established one**: n=6 (model, quant) pairs is far too few
-for a meaningful p-value or CI on a Spearman correlation, and both
-families' MCP-side deltas come from n=12 (U1) + n=10 (U2) = 22 pooled
-tasks per point — the same small-sample caveats as every result in this
-document apply here too, compounded. What can be stated honestly: the
-*direction and magnitude* of degradation this project measured on real,
-unmodified MCP schemas does not resemble QuantCall's BFCL-measured pattern
-for either family, and the mechanism behind that mismatch (a qualitative
-output-format failure mode, not a smooth accuracy decline) was directly
-observed, not inferred from the correlation number alone. Phase 3's larger
-task set and bootstrap CI on Δ itself (not yet on CBC) would be needed
-before treating -0.720 as anything more than suggestive.
+for a meaningful p-value or CI on a Spearman correlation, and each
+family's MCP-side deltas are now pooled across 3 tiers × ~10-12 tasks —
+more data than Phase 2, but still nowhere near enough for a CI on the
+correlation itself. What can be stated honestly: the *direction and
+magnitude* of degradation this project measured on real, unmodified MCP
+schemas does not resemble QuantCall's BFCL-measured pattern for either
+family, and the mechanism behind that mismatch (qualitative output-format
+failure modes, not a smooth accuracy decline) was directly observed, not
+inferred from the correlation number alone. Bootstrap CI on Δ itself
+(spec §4.7, not yet on CBC) is still outstanding and would need multiple
+seeds/repeats per (model, quant, tier), not just the single-seed runs done
+so far.
+
+### Schema Complexity Index vs. degradation (H2) — preliminary, 3 tiers only
+
+H2 asks whether a tier's Schema Complexity Index (SCI, spec §4.3, computed
+from each tier's live tool schemas) predicts how much quantization
+degradation that tier shows. Real SCI was computed across all 30 tools
+from the three live tiers (filesystem, git, sqlite) in a single
+z-normalized corpus:
+
+| Tier | Tools | Mean SCI | Mean \|Δ SVR-MCP\| across quants (both models) |
+|---|---|---|---|
+| filesystem (U1) | 14 | +0.206 | 0.083 |
+| git (U2) | 12 | +0.027 | 0.083 |
+| sqlite (U3) | 4 | -0.615 | 0.100 |
+
+At face value this runs **opposite** to H2's hypothesis: sqlite has the
+*lowest* schema complexity (its tools take one or two flat string
+arguments each, no nesting, no unions) but the *largest* degradation
+swing, while filesystem has the *highest* schema complexity but a
+middling swing. **This is not treated as evidence against H2** — with only
+3 tiers, a correlation coefficient over 3 points is not meaningful in
+either direction, and is not reported as a rho for that reason (spec §4.3
+calls for a regression once "enough tool schemas across tiers" exist; 3 is
+not enough).
+
+What is worth stating plainly, though, is a real methodological
+observation surfaced by this attempt: SCI as defined (spec §4.3) measures
+*schema shape* complexity (nesting depth, property count, unions,
+description length) — it does not, and by construction cannot, measure the
+difficulty of composing a correct *argument value* for a schema-simple
+field. sqlite's `query: string` parameter is trivially simple by every SCI
+component, yet writing a correct SQL query for a natural-language question
+is exactly where both models struggled (hallucinated table/column names,
+outright refusals). If a future tier's degradation really is driven by
+argument-content difficulty rather than schema shape, SCI alone won't
+capture it — worth flagging before Phase 6's U4 `memory` tier (spec's
+designated "best stress test of H2") is added, since a 4th tier still
+won't fully resolve this with only 4 points, but the qualitative caveat
+should be carried forward regardless of sample size.
 
 ### The SVR-vs-TSR gap (H4)
 
 Across every (model, quant, tier) combination measured so far, TSR is never
 higher than SVR-MCP, and is often meaningfully lower (e.g. Llama-3.2-1B
 Q4_K_M on U2: SVR-MCP=0.600 but TSR=0.200 — 3 of the 6 schema-valid calls
-still failed to produce the *correct* outcome). This confirms the expected
-execution gap: passing schema validation is necessary but not sufficient
-for a tool call to actually do what was asked, and that gap is not uniform
-across quants or model families, so a leaderboard built on SVR-MCP alone
-would overstate real-world reliability, particularly for the weaker family.
+still failed to produce the *correct* outcome; Qwen3-0.6B Q4_K_M on U3:
+SVR-MCP=0.800 but TSR=0.500 — 3 of 8 schema-valid calls used a
+syntactically fine but semantically wrong query). This confirms the
+expected execution gap: passing schema validation is necessary but not
+sufficient for a tool call to actually do what was asked, and that gap is
+not uniform across quants, model families, or tiers, so a leaderboard
+built on SVR-MCP alone would overstate real-world reliability — the sqlite
+tier makes this most visible of the three.
 
 ## Reference server versions used
 
