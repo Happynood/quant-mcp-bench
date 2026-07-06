@@ -1,0 +1,57 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# uv
+uv.lock
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Linting / type checking
+.ruff_cache/
+.pyright/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Results (real run outputs; committed only when sharing)
+results/
+*.result.json
+*.manifest.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment secrets
+.env
+.env.local
+
+# HuggingFace cache
+~/.cache/huggingface/
+
+# Local agent instructions / private build process
+CLAUDE.md
+.claude/
+QuantMCP-SPEC-EN.md
+QuantMCP-ClaudeCode-Runbook.md
+.agent-progress/

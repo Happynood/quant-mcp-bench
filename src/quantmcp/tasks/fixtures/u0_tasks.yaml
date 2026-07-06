@@ -1,0 +1,19 @@
+# U0 smoke-tier task fixture (spec §5). No filesystem fixture needed — the
+# toy server's two tools are pure/self-contained.
+tasks:
+  - id: u0-add-basic
+    instruction: "Use the add tool to compute 2 + 3."
+    expects_call: true
+    checker:
+      name: call_result_number_equals
+      args:
+        index: 0
+        value: 5.0
+  - id: u0-write-note
+    instruction: "Use the write_note tool to save the text 'hello mcp' into a file named note.txt."
+    expects_call: true
+    checker:
+      name: file_contains
+      args:
+        filename: note.txt
+        contains: hello mcp

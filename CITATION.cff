@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use QuantMCP in your research, please cite it as below."
+type: software
+title: "QuantMCP: Does Quantization Survive Real MCP Tool Schemas?"
+authors:
+  - family-names: "Happynood"
+    given-names: "Alex"
+version: 0.1.0
+date-released: "2026-07-07"
+repository-code: "https://github.com/Happynood/quant-mcp-bench"
+license: MIT
+abstract: >
+  QuantMCP re-runs the quant-toolcall-bench (QuantCall) quantization-degradation
+  measurement methodology against real, unmodified Model Context Protocol (MCP)
+  server tool schemas, executed end-to-end against sandboxed fixtures rather
+  than only structurally validated. It produces SVR-MCP, TSR, a Schema
+  Complexity Index (SCI), and Cross-Benchmark Consistency (CBC) against
+  QuantCall's already-published BFCL-based results.
+references:
+  - type: software
+    title: "QuantCall: Benchmarking Tool-Calling Reliability Under Quantization"
+    authors:
+      - family-names: "Happynood"
+        given-names: "Alex"
+    repository-code: "https://github.com/Happynood/quant-toolcall-bench"
+    license: MIT
