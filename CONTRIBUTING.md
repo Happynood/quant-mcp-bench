@@ -8,13 +8,16 @@ To add a model/quant/server combination to the leaderboard:
    ```bash
    quantmcp run \
      --config configs/your_config.yaml \
-     --output results/your_model_quant_server.json \
+     --output results/your_model_quant_server.result.json \
      --manifest results/your_model_quant_server.manifest.json
    ```
 2. Verify the result file includes a manifest (git SHA, config hash, fixture
-   bundle hash, MCP server package version, hardware fingerprint).
-3. Open a PR adding only the `results/*.json` and `results/*.manifest.json`
-   files. Do not edit the leaderboard table manually — it is generated from
+   bundle hash, MCP server package version, hardware fingerprint). The
+   manifest is embedded in `result.json` automatically; `--manifest` also
+   writes it standalone for easy diffing across runs.
+3. Open a PR adding only the `results/*.result.json` and
+   `results/*.manifest.json` files. Do not edit the leaderboard table
+   manually — run `quantmcp leaderboard results/` to regenerate it from
    result files.
 
 ## Submitting a New MCP Server Tier
@@ -29,12 +32,15 @@ To add a model/quant/server combination to the leaderboard:
    registered in `src/quantmcp/tasks/checkers.py`.
 4. Register the tier in `src/quantmcp/config.py` (`ServerConfig.tier`) and
    `src/quantmcp/cli.py` (`_server_command_for_tier`).
-5. Add tests in `tests/test_servers_your_server.py`.
-6. CI validates the new tier structurally against the mock backend — no
-   GPU or model download required for a PR to pass. Attach a real
-   `result.json` + manifest from your own hardware once the structural
-   checks pass, and CI will validate the manifest and append it to the
-   leaderboard.
+5. Add tests in `tests/test_servers_your_server.py`, marked
+   `pytestmark = pytest.mark.integration` if launching the real tool
+   requires network access or an external runtime (Node/npx, uvx) — run
+   them locally with `make test-integration`. `make verify`/the main CI
+   job never depend on network access, so a fresh clone with no external
+   tool available still passes.
+6. Once the structural checks pass, attach a real `result.json` + manifest
+   from your own hardware, then run `quantmcp leaderboard results/` to
+   confirm it appears in the regenerated leaderboard before opening a PR.
 
 ## Code Contributions
 
@@ -61,9 +67,11 @@ uv sync --dev
 make verify
 ```
 
-This runs: `ruff check`, `ruff format --check`, `pyright`, `pytest -q`, and
-the smoke end-to-end test (mock backend + the in-repo U0 toy server — no
-download, no GPU).
+This runs: `ruff check`, `ruff format --check`, `pyright`, the non-
+integration test suite, and the smoke end-to-end test (mock backend + the
+in-repo U0 toy server) — no network, no download, no GPU required. Run
+`make test-integration` separately if you have Node.js/`npx` and `uvx`
+available and want to exercise the real filesystem/git/sqlite servers.
 
 ## Hard Rules
 

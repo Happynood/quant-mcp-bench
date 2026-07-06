@@ -68,6 +68,14 @@ for QUANT_FILE in Q4_K_M Q5_K_M Q8_0 bf16; do
 done
 ```
 
+**Note on the committed sweep configs** (`configs/*-sweep/*.yaml`): their
+`model:` field is an absolute path from the machine these results were
+produced on (e.g. `~/models/...`). Replace it with wherever
+you actually downloaded the GGUF file (e.g. `~/models/...`, expanded to
+your own home directory) before running them — the configs are real,
+working examples of the harness, not a claim that this exact path exists
+on your machine.
+
 ## What has actually been run (Phase 1, superseded by Phase 2 below)
 
 Hardware: RTX 3050 Laptop GPU, 4 GB VRAM (3772 MiB reported free by

@@ -1,5 +1,5 @@
 .PHONY: install install-llama-cpp install-transformers install-vllm \
-        test lint format typecheck verify \
+        test test-integration lint format typecheck verify \
         run clean
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
@@ -36,7 +36,14 @@ typecheck:
 	uv run pyright
 
 test:
-	uv run pytest -q
+	uv run pytest -q -m "not integration"
+
+# Requires Node.js (npx) and uv's uvx to be able to reach npm/PyPI to
+# fetch the filesystem/git reference MCP servers on demand — not part of
+# the default `verify` gate so a fresh clone with no network access still
+# passes `make verify` out of the box.
+test-integration:
+	uv run pytest -q -m integration
 
 smoke:
 	uv run quantmcp run --config configs/smoke.yaml --output /tmp/qm-smoke-result.json --manifest /tmp/qm-smoke-manifest.json

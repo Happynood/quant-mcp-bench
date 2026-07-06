@@ -37,8 +37,8 @@ jobs:
       - name: Type check (pyright)
         run: uv run pyright
 
-      - name: Unit + integration tests
-        run: uv run pytest -q
+      - name: Unit tests (no network, no external MCP servers)
+        run: uv run pytest -q -m "not integration"
 
       - name: Smoke run (U0 toy server, mock backend)
         run: |
@@ -52,3 +52,29 @@ jobs:
           assert "svr_mcp" in d and "tsr" in d and "manifest" in d, "smoke result missing fields"
           print("smoke OK")
           EOF
+
+  integration:
+    name: Integration (reference MCP servers)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node.js (for the npx-launched filesystem server)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install uv
+        run: pip install uv==0.4.30
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Integration tests (filesystem/git/sqlite servers)
+        run: uv run pytest -q -m integration
