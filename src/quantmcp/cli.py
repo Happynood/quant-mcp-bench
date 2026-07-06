@@ -242,8 +242,19 @@ def cross_bench_cmd(result_files: tuple[str, ...], bfcl_results: str) -> None:
 @click.argument("results_dir", type=click.Path(exists=True))
 @click.option("--output-dir", default="leaderboard", show_default=True, type=click.Path())
 def leaderboard_cmd(results_dir: str, output_dir: str) -> None:
-    """Build runs.csv + leaderboard.{json,csv,md} from a directory of results."""
-    click.echo("[leaderboard stub] Extended report layer lands in Phase 3 (spec §10).")
+    """Build the MCP leaderboard + per-server breakdown from a directory of results."""
+    from quantmcp.report.mcp_leaderboard import build_mcp_leaderboard
+
+    leaderboard = build_mcp_leaderboard(results_dir, output_dir)
+    n_runs = len(leaderboard["rows"])
+    n_tiers = len(leaderboard["tier_breakdown"])
+    click.echo(f"{n_runs} run(s) across {n_tiers} tier(s)")
+    for t in leaderboard["tier_breakdown"]:
+        click.echo(
+            f"  {t['tier']:<12} mean_svr_mcp={t['mean_svr_mcp']:.3f}  "
+            f"mean_tsr={t['mean_tsr']:.3f}  sci={t['sci']}"
+        )
+    click.echo(f"Written to {output_dir}/")
 
 
 @main.command("validate-config")
