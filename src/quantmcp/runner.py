@@ -95,6 +95,8 @@ async def _run_one_instance(
             # model the absolute path it's allowed to operate in, mirroring how
             # a real client would surface the server's allowed directories.
             instruction = task.instruction.format(root=str(instance_root))
+            if cfg.chat_variant == "qwen3_nothink":
+                instruction = f"{instruction} /no_think"
             messages = [{"role": "user", "content": instruction}]
 
             latency_ms = 0.0
