@@ -170,6 +170,66 @@ automatically, not hand-entered).
    "single/few-step, cheap-to-execute tasks" scope for tractability on a
    4 GB GPU).
 
+## Family contrast: Llama-3.2-1B (Phase 2)
+
+QuantCall's own BFCL results flag Llama-3.2-1B as its most quantization-
+sensitive family: SVR (T1+T6, n=200) fp16=0.327, Q8_0=0.305, Q5_K_M=0.313,
+Q4_K_M=0.280 — a real, if modest, monotonic-ish decline. To see whether the
+same family shows a comparable pattern on real MCP schemas, the identical
+U1 filesystem sweep (naturalistic tasks, same 12 tasks, greedy, seed 0,
+single repeat) was run for Llama-3.2-1B-Instruct across the same 4 quants,
+same `llama-cpp` backend, default (`raw_json`) parser (Llama does not need
+the `qwen3_nothink` chat variant).
+
+| Quant | SVR-MCP | TSR | Peak VRAM (GB) |
+|---|---|---|---|
+| fp16 | 0.000 | 0.000 | 2.896 |
+| Q8_0 | 0.000 | 0.000 | 1.823 |
+| Q5_K_M | 0.250 | 0.250 | 1.440 |
+| Q4_K_M | 0.250 | 0.250 | 1.345 |
+
+Raw results + manifests: `results/llama3.2-1b-u1/*.result.json`.
+
+**This is the opposite direction from BFCL's monotonic decline, and was
+investigated before being written here** (per the cross-check requirement):
+it is a genuine, reproducible model behavior difference, not a harness bug.
+Manually driving the backend with verbose raw-output logging for all 12
+tasks at each quant showed a clear, consistent failure-mode shift:
+
+- At **fp16 and Q8_0**, the model responds to every task by echoing back a
+  tool-*definition*-shaped JSON object — `{"type": "function", "function":
+  {"name": ..., "parameters": {<the tool's own JSON Schema>}}}` — instead of
+  a tool *call* with filled-in argument values. This is not a valid call
+  under any of the parser's recognized shapes (it correctly does not treat
+  a schema echo as a call), so SVR-MCP is genuinely 0 at both quants: the
+  model never attempts an actual call.
+- At **Q5_K_M and Q4_K_M**, the model partially shifts to a flatter
+  `{"name": "<tool>", "parameters": {<actual values>}}` shape for several
+  (not all) tasks — a shape the parser does accept as a call. Of the 3
+  tasks that validate (`list_directory`, `write_file`, `get_file_info`),
+  the tool names are genuine and the arguments are correct; on other tasks
+  the model still hallucinates a plausible-sounding but nonexistent tool
+  name (`read_file`, `rename_file` — neither exists in the real
+  `server-filesystem` tool list, whose actual names are `read_text_file`
+  and `move_file`), which correctly fails SVR-MCP.
+
+In other words, quantization did not make this model uniformly worse here —
+it shifted which *output format* the model defaults to, and the flatter
+format Q5_K_M/Q4_K_M happen to produce is easier for the parser to accept
+as a real (if sometimes wrong) call attempt than the schema-echo fp16/Q8_0
+consistently produce. BFCL's simpler, terser function signatures apparently
+never trigger the schema-echo failure mode in QuantCall's own results, so
+this qualifies as a genuinely new observation from testing on real,
+unmodified MCP tool schemas rather than a replication of the BFCL finding.
+
+**This result should not be over-read**: n=12, single seed, single repeat,
+and the entire effect is 0/12 vs 3/12 — a 3-task swing. At this sample size
+that is the finest resolution the harness has; it is reported honestly
+because the underlying raw-output failure-mode shift was directly observed
+and is qualitatively real, not because the point estimate itself is
+precise. Phase 3's larger task set, multiple seeds, and bootstrap CI are
+what would be needed to state a confidence interval on this effect.
+
 ## Reference server versions used
 
 - `@modelcontextprotocol/server-filesystem` — version `0.6.3` per its
