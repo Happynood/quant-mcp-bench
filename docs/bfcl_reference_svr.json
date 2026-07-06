@@ -1,0 +1,14 @@
+{
+  "_comment": "QuantCall's published BFCL SVR (T1+T6, free decoding, n=200) for the two model families this project has real MCP-side results for. Copied by hand from quant-toolcall-bench's published README table, not computed by this project.",
+  "_source": "https://github.com/Happynood/quant-toolcall-bench README.md, table as of the pinned reference SHA",
+  "entries": [
+    {"model": "Qwen3-0.6B", "quant": "fp16", "svr_bfcl": 0.877},
+    {"model": "Qwen3-0.6B", "quant": "Q8_0", "svr_bfcl": 0.878},
+    {"model": "Qwen3-0.6B", "quant": "Q5_K_M", "svr_bfcl": 0.878},
+    {"model": "Qwen3-0.6B", "quant": "Q4_K_M", "svr_bfcl": 0.873},
+    {"model": "Llama-3.2-1B", "quant": "fp16", "svr_bfcl": 0.327},
+    {"model": "Llama-3.2-1B", "quant": "Q8_0", "svr_bfcl": 0.305},
+    {"model": "Llama-3.2-1B", "quant": "Q5_K_M", "svr_bfcl": 0.313},
+    {"model": "Llama-3.2-1B", "quant": "Q4_K_M", "svr_bfcl": 0.280}
+  ]
+}

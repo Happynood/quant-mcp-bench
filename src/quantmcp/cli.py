@@ -210,7 +210,20 @@ def compare_cmd(result_files: tuple[str, ...], fmt: str, output_path: str | None
 @click.option("--bfcl-results", required=True, type=click.Path(exists=True))
 def cross_bench_cmd(result_files: tuple[str, ...], bfcl_results: str) -> None:
     """Compute Cross-Benchmark Consistency (CBC, spec §4.5) vs QuantCall results."""
-    click.echo("[cross-bench stub] Implementation lands in Phase 2 (spec §10).")
+    from quantmcp.report.cross_bench import compute_cbc
+
+    try:
+        result = compute_cbc([Path(p) for p in result_files], Path(bfcl_results))
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"{'model':<16}{'quant':<10}{'Δ SVR bfcl':<14}{'Δ SVR mcp':<12}")
+    for row in result.table:
+        click.echo(
+            f"{row['model']:<16}{row['quant']:<10}"
+            f"{row['delta_svr_bfcl']:<14.3f}{row['delta_svr_mcp']:<12.3f}"
+        )
+    click.echo(f"\nCBC (Spearman rho) = {result.rho:.3f}  (n={result.n_pairs} pairs)")
 
 
 @main.command("leaderboard")

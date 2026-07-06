@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-07-06T22:44:18.271533+00:00",
+  "git_commit": "da5c8606812e4d597c6f10a349d3d452ca120570",
+  "git_dirty": true,
+  "config_sha256": "db1bc611a6d3073d48ce910978261b86c758f71670fd695bee55a2b009023725",
+  "fixture_sha256": "e5ea432306c9157016fbae35d648db41c0fe4faf144092022b04694bc47a9939",
+  "model": "~/models/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+  "backend": "llama-cpp",
+  "quant": "Q4_K_M",
+  "decoding": "free",
+  "server_tier": "git",
+  "mcp_server_version": "1.28.1",
+  "seed": 0,
+  "python_version": "3.11.15 (main, May 10 2026, 19:28:18) [Clang 22.1.3 ]",
+  "platform_info": "Linux-7.0.0-27-generic-x86_64-with-glibc2.43",
+  "cpu_model": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+  "cpu_count": 12,
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+    "driver_version": "595.71.05",
+    "cuda_version": "13.2",
+    "vram_total_mb": 4096,
+    "torch_cuda_available": null,
+    "torch_cuda_device_name": null
+  }
+}

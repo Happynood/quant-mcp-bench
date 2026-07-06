@@ -230,6 +230,86 @@ and is qualitatively real, not because the point estimate itself is
 precise. Phase 3's larger task set, multiple seeds, and bootstrap CI are
 what would be needed to state a confidence interval on this effect.
 
+## U2 git tier (Phase 2)
+
+The same two models were also run against the U2 `git` tier (official
+`mcp-server-git`, launched via `uvx`), 10 naturalistic tasks (status, log,
+diff unstaged/staged, branch list, show HEAD, add, reset, create-branch,
+commit) against a small fixed fixture repository.
+
+| Model | Quant | SVR-MCP | TSR |
+|---|---|---|---|
+| Qwen3-0.6B | fp16 | 1.000 | 1.000 |
+| Qwen3-0.6B | Q8_0 | 0.900 | 0.900 |
+| Qwen3-0.6B | Q5_K_M | 1.000 | 1.000 |
+| Qwen3-0.6B | Q4_K_M | 1.000 | 0.800 |
+| Llama-3.2-1B | fp16 | 0.400 | 0.200 |
+| Llama-3.2-1B | Q8_0 | 0.400 | 0.200 |
+| Llama-3.2-1B | Q5_K_M | 0.600 | 0.300 |
+| Llama-3.2-1B | Q4_K_M | 0.600 | 0.200 |
+
+Raw results + manifests: `results/{qwen3-0.6b,llama3.2-1b}-u2/*.result.json`.
+Llama-3.2-1B shows the same qualitative direction here as on U1 (higher
+SVR-MCP at lower precision), consistent with the same schema-echo-vs-flat-
+call failure-mode shift described above rather than a filesystem-tier-
+specific artifact.
+
+## Cross-Benchmark Consistency (CBC, spec §4.5) and the SVR-vs-TSR gap (H4)
+
+CBC asks: does QuantCall's BFCL-measured quantization degradation pattern
+predict what happens on real MCP schemas? It is computed as the Spearman
+correlation between each (model, quant) pair's BFCL SVR delta (vs. that
+model's own fp16 baseline) and its SVR-MCP delta, where SVR-MCP is pooled
+across both U1 and U2 result files (weighted by task count):
+
+```
+quantmcp cross-bench results/*/*.result.json --bfcl-results docs/bfcl_reference_svr.json
+```
+
+| Model | Quant | Δ SVR bfcl | Δ SVR-MCP (pooled U1+U2) |
+|---|---|---|---|
+| Llama-3.2-1B | Q4_K_M | -0.047 | +0.227 |
+| Llama-3.2-1B | Q5_K_M | -0.014 | +0.227 |
+| Llama-3.2-1B | Q8_0 | -0.022 | 0.000 |
+| Qwen3-0.6B | Q4_K_M | -0.004 | 0.000 |
+| Qwen3-0.6B | Q5_K_M | +0.001 | 0.000 |
+| Qwen3-0.6B | Q8_0 | +0.001 | -0.045 |
+
+**CBC = -0.720 (n=6 pairs).** This is the opposite of a high, significant
+positive rho — QuantCall's BFCL-measured degradation pattern does **not**
+carry over to real MCP tool schemas for these two families at this sample
+size. The correlation is driven almost entirely by Llama-3.2-1B: BFCL shows
+its largest quantization drop at Q4_K_M, while our MCP measurement shows
+its largest *increase* at Q4_K_M/Q5_K_M — which, per the raw-output
+investigation above, is not really "the model getting better at tool use
+under quantization" but a shift between two different failure modes
+(unparseable schema-echo vs. a flatter, sometimes-correct call shape).
+
+**This should be read as a preliminary, directional finding, not a
+statistically established one**: n=6 (model, quant) pairs is far too few
+for a meaningful p-value or CI on a Spearman correlation, and both
+families' MCP-side deltas come from n=12 (U1) + n=10 (U2) = 22 pooled
+tasks per point — the same small-sample caveats as every result in this
+document apply here too, compounded. What can be stated honestly: the
+*direction and magnitude* of degradation this project measured on real,
+unmodified MCP schemas does not resemble QuantCall's BFCL-measured pattern
+for either family, and the mechanism behind that mismatch (a qualitative
+output-format failure mode, not a smooth accuracy decline) was directly
+observed, not inferred from the correlation number alone. Phase 3's larger
+task set and bootstrap CI on Δ itself (not yet on CBC) would be needed
+before treating -0.720 as anything more than suggestive.
+
+### The SVR-vs-TSR gap (H4)
+
+Across every (model, quant, tier) combination measured so far, TSR is never
+higher than SVR-MCP, and is often meaningfully lower (e.g. Llama-3.2-1B
+Q4_K_M on U2: SVR-MCP=0.600 but TSR=0.200 — 3 of the 6 schema-valid calls
+still failed to produce the *correct* outcome). This confirms the expected
+execution gap: passing schema validation is necessary but not sufficient
+for a tool call to actually do what was asked, and that gap is not uniform
+across quants or model families, so a leaderboard built on SVR-MCP alone
+would overstate real-world reliability, particularly for the weaker family.
+
 ## Reference server versions used
 
 - `@modelcontextprotocol/server-filesystem` — version `0.6.3` per its
@@ -238,6 +318,9 @@ what would be needed to state a confidence interval on this effect.
   MCP `serverInfo.version` as `0.2.0` (the MCP protocol/server version, not
   the npm package version — both are legitimate, distinct version strings,
   and the manifest records the one the live server actually reports).
+- `mcp-server-git` — version `0.6.2` per its `pyproject.toml` at commit
+  `d31124c` (2026-07-06) against `github.com/modelcontextprotocol/servers`;
+  launched via `uvx mcp-server-git --repository <sandbox_root>`.
 - `sqlite` is **not** present in the current reference servers list (checked
   the same day) — Phase 3's U3 tier will need the documented fallback (a
   minimal self-written FastMCP wrapper), per the scope note this project's
