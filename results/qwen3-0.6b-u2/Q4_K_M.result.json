@@ -1,9 +1,17 @@
 {
   "n": 10,
   "svr_mcp": 1.0,
-  "tsr": 0.8,
+  "tsr": 0.9,
+  "svr_mcp_ci": [
+    1.0,
+    1.0
+  ],
+  "tsr_ci": [
+    0.7,
+    1.0
+  ],
   "svr": 1.0,
-  "total_latency_ms": 8073.882306001906,
+  "total_latency_ms": 10222.643844999766,
   "vram_gb": 1.2392578125,
   "config": {
     "model": "~/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
@@ -17,8 +25,8 @@
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-06T22:42:45.698555+00:00",
-    "git_commit": "da5c8606812e4d597c6f10a349d3d452ca120570",
+    "timestamp": "2026-07-06T23:08:36.287678+00:00",
+    "git_commit": "eaf6596d5cf7a33c88710c5bb3851170a10f61ca",
     "git_dirty": true,
     "config_sha256": "423edf3084c8d8962df531d10cbf6aab655d70e2583be295a5ff32b0a7d7b2e5",
     "fixture_sha256": "e5ea432306c9157016fbae35d648db41c0fe4faf144092022b04694bc47a9939",

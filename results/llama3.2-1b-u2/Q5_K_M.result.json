@@ -1,9 +1,17 @@
 {
   "n": 10,
-  "svr_mcp": 0.6,
-  "tsr": 0.3,
-  "svr": 0.6,
-  "total_latency_ms": 11075.813489000211,
+  "svr_mcp": 0.5,
+  "tsr": 0.2,
+  "svr_mcp_ci": [
+    0.2,
+    0.8
+  ],
+  "tsr_ci": [
+    0.0,
+    0.5
+  ],
+  "svr": 0.5,
+  "total_latency_ms": 13762.132097997892,
   "vram_gb": 1.4248046875,
   "config": {
     "model": "~/models/Llama-3.2-1B-Instruct-Q5_K_M.gguf",
@@ -17,8 +25,8 @@
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-06T22:43:59.662945+00:00",
-    "git_commit": "da5c8606812e4d597c6f10a349d3d452ca120570",
+    "timestamp": "2026-07-06T23:13:57.064292+00:00",
+    "git_commit": "f7ff1edf2edd71d7efd65bce0c0104ed46794550",
     "git_dirty": true,
     "config_sha256": "c235fc1e6bdace732a8d311e3680762cbc3cc4093bab702fb6155dfd49b5074e",
     "fixture_sha256": "e5ea432306c9157016fbae35d648db41c0fe4faf144092022b04694bc47a9939",

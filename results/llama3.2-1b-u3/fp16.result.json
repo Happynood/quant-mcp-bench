@@ -2,8 +2,16 @@
   "n": 10,
   "svr_mcp": 0.2,
   "tsr": 0.1,
+  "svr_mcp_ci": [
+    0.0,
+    0.5
+  ],
+  "tsr_ci": [
+    0.0,
+    0.3
+  ],
   "svr": 0.2,
-  "total_latency_ms": 13105.900263002695,
+  "total_latency_ms": 16443.77885400172,
   "vram_gb": 2.8310546875,
   "config": {
     "model": "~/models/Llama-3.2-1B-Instruct-f16.gguf",
@@ -17,8 +25,8 @@
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-06T22:57:35.290709+00:00",
-    "git_commit": "5d4a68e3049ca16ccf9f93931f3ddda5d30f61d2",
+    "timestamp": "2026-07-06T23:14:41.360615+00:00",
+    "git_commit": "f7ff1edf2edd71d7efd65bce0c0104ed46794550",
     "git_dirty": true,
     "config_sha256": "9e8fe0815e10b4c391146b68b465bc81d973413194ee5ec2583f76bb0a03e52f",
     "fixture_sha256": "1f4db6fb92e1facce1208ad3ed87b1c276c740c1eb188cfd29110f1cd934d10c",

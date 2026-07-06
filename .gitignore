@@ -49,7 +49,7 @@ Thumbs.db
 # HuggingFace cache
 ~/.cache/huggingface/
 
-# Local agent instructions / private build process
+# Local planning/runbook files (private, not part of the published project)
 CLAUDE.md
 .claude/
 QuantMCP-SPEC-EN.md

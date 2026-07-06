@@ -155,10 +155,14 @@ automatically, not hand-entered).
 ### Honest scope limitations of this result
 
 1. **n=12, single seed, single repeat.** This is a plumbing-proving MVP
-   result (spec's Phase 1 goal), not a statistically powered sweep. No
-   bootstrap CI is reported here for that reason — at n=12 a CI would be
-   too wide to say anything the raw numbers don't already say. Phase 3 adds
-   bootstrap CI across a larger task set and multiple seeds/repeats.
+   result (spec's Phase 1 goal), not a statistically powered sweep.
+   Bootstrap 95% CI (spec §4.7) was added in Phase 3 — every `result.json`
+   now carries `svr_mcp_ci`/`tsr_ci`, resampled from that run's own n
+   per-task outcomes — but at n=12 those intervals are wide (e.g. this
+   fp16 run's SVR-MCP 95% CI is [0.583, 1.000]), wide enough that they
+   don't distinguish most of these quant levels from each other. That
+   width is itself the honest signal that n=12/single-repeat isn't enough
+   to make a precise claim, which is exactly what the CI is for.
 2. **GPU greedy decoding is not perfectly bit-deterministic run-to-run** —
    a repeated Q4_K_M run in Phase 1 produced 12/12 passing where the
    recorded sweep run got 11/12 (non-associative floating-point reduction
@@ -240,19 +244,23 @@ commit) against a small fixed fixture repository.
 | Model | Quant | SVR-MCP | TSR |
 |---|---|---|---|
 | Qwen3-0.6B | fp16 | 1.000 | 1.000 |
-| Qwen3-0.6B | Q8_0 | 0.900 | 0.900 |
+| Qwen3-0.6B | Q8_0 | 1.000 | 1.000 |
 | Qwen3-0.6B | Q5_K_M | 1.000 | 1.000 |
-| Qwen3-0.6B | Q4_K_M | 1.000 | 0.800 |
-| Llama-3.2-1B | fp16 | 0.400 | 0.200 |
+| Qwen3-0.6B | Q4_K_M | 1.000 | 0.900 |
+| Llama-3.2-1B | fp16 | 0.600 | 0.200 |
 | Llama-3.2-1B | Q8_0 | 0.400 | 0.200 |
-| Llama-3.2-1B | Q5_K_M | 0.600 | 0.300 |
-| Llama-3.2-1B | Q4_K_M | 0.600 | 0.200 |
+| Llama-3.2-1B | Q5_K_M | 0.500 | 0.200 |
+| Llama-3.2-1B | Q4_K_M | 0.600 | 0.300 |
 
 Raw results + manifests: `results/{qwen3-0.6b,llama3.2-1b}-u2/*.result.json`.
-Llama-3.2-1B shows the same qualitative direction here as on U1 (higher
-SVR-MCP at lower precision), consistent with the same schema-echo-vs-flat-
-call failure-mode shift described above rather than a filesystem-tier-
-specific artifact.
+Llama-3.2-1B doesn't show a monotonic decline here either — Q4_K_M matches
+its own fp16 SVR-MCP rather than falling below it, consistent with the
+same schema-echo-vs-flat-call failure-mode shift described above rather
+than a filesystem-tier-specific artifact. (These exact numbers were
+regenerated once, to populate the bootstrap CI fields added later in
+Phase 3 — see the note on run-to-run variability in the CBC section below;
+Qwen3-0.6B's numbers reproduced identically, Llama-3.2-1B's shifted by
+1-2 tasks out of 10 between the two runs of the same seed=0 greedy config.)
 
 ## U3 sqlite tier (Phase 3)
 
@@ -319,39 +327,47 @@ quantmcp cross-bench results/*/*.result.json --bfcl-results docs/bfcl_reference_
 
 | Model | Quant | Δ SVR bfcl | Δ SVR-MCP (pooled U1+U2+U3) |
 |---|---|---|---|
-| Llama-3.2-1B | Q4_K_M | -0.047 | +0.188 |
-| Llama-3.2-1B | Q5_K_M | -0.014 | +0.125 |
-| Llama-3.2-1B | Q8_0 | -0.022 | 0.000 |
-| Qwen3-0.6B | Q4_K_M | -0.004 | +0.094 |
+| Llama-3.2-1B | Q4_K_M | -0.047 | +0.125 |
+| Llama-3.2-1B | Q5_K_M | -0.014 | +0.031 |
+| Llama-3.2-1B | Q8_0 | -0.022 | -0.062 |
+| Qwen3-0.6B | Q4_K_M | -0.004 | +0.125 |
 | Qwen3-0.6B | Q5_K_M | +0.001 | -0.031 |
-| Qwen3-0.6B | Q8_0 | +0.001 | -0.031 |
+| Qwen3-0.6B | Q8_0 | +0.001 | 0.000 |
 
-**CBC = -0.824 (n=6 pairs)**, strengthening (more negative) from Phase 2's
--0.720 now that U3 is included. This remains the opposite of a high,
-significant positive rho — QuantCall's BFCL-measured degradation pattern
-does **not** carry over to real MCP tool schemas for these two families at
-this sample size. The correlation is driven almost entirely by
-Llama-3.2-1B: BFCL shows its largest quantization drop at Q4_K_M, while our
-MCP measurement shows its largest *increase* at Q4_K_M/Q5_K_M — which, per
-the raw-output investigation in the family-contrast section above, is not
-really "the model getting better at tool use under quantization" but a
-shift between two different failure modes (unparseable schema-echo vs. a
-flatter, sometimes-correct call shape).
+**CBC = -0.265 (n=6 pairs).** This remains a negative rho — QuantCall's
+BFCL-measured degradation pattern does not carry over cleanly to real MCP
+tool schemas for these two families — but the magnitude is markedly
+smaller than an earlier version of this same computation.
+
+**A directly observed instability, not just a caveat:** re-running the
+identical seed=0, greedy, single-repeat U1/U2/U3 configs once more (to
+populate the newly-added bootstrap CI fields on every result) changed this
+project's own CBC point estimate from an earlier **-0.824** to **-0.265**
+— a large swing from re-running the *exact same* configuration twice, not
+from any code or task change. Nearly all of the movement traces to
+Llama-3.2-1B's U2 numbers, which shifted by 1-2 tasks out of 10 between
+runs (see the note in the U2 section above). This is the clearest,
+most concrete demonstration in this document of why GPU greedy-decoding
+non-determinism (documented since Phase 1) matters for any number derived
+from a handful of small task sets: CBC is computed from deltas of deltas,
+so it amplifies exactly this kind of single-run noise. **The sign of CBC
+(negative) has been stable across both computations; the magnitude has
+not** — treat "BFCL's degradation pattern doesn't cleanly predict real-MCP
+degradation for these two families" as the load-bearing claim, and treat
+the specific value -0.265 (or -0.824) as illustrative, not as a number to
+cite on its own.
 
 **This should be read as a preliminary, directional finding, not a
 statistically established one**: n=6 (model, quant) pairs is far too few
 for a meaningful p-value or CI on a Spearman correlation, and each
-family's MCP-side deltas are now pooled across 3 tiers × ~10-12 tasks —
-more data than Phase 2, but still nowhere near enough for a CI on the
-correlation itself. What can be stated honestly: the *direction and
-magnitude* of degradation this project measured on real, unmodified MCP
-schemas does not resemble QuantCall's BFCL-measured pattern for either
-family, and the mechanism behind that mismatch (qualitative output-format
-failure modes, not a smooth accuracy decline) was directly observed, not
-inferred from the correlation number alone. Bootstrap CI on Δ itself
-(spec §4.7, not yet on CBC) is still outstanding and would need multiple
-seeds/repeats per (model, quant, tier), not just the single-seed runs done
-so far.
+family's MCP-side deltas are pooled across 3 tiers × ~10-12 tasks — not
+enough for a CI on the correlation itself even before accounting for the
+run-to-run instability just described. Bootstrap CI is implemented on
+SVR-MCP/TSR themselves (spec §4.7, `svr_mcp_ci`/`tsr_ci` in every
+`result.json`) but not yet propagated through to a CI on CBC — doing that
+properly would need many repeats per (model, quant, tier) to build an
+empirical distribution over Δ itself, not just a single point estimate
+per repeat.
 
 ### Schema Complexity Index vs. degradation (H2) — preliminary, 3 tiers only
 
@@ -363,15 +379,16 @@ z-normalized corpus:
 
 | Tier | Tools | Mean SCI | Mean \|Δ SVR-MCP\| across quants (both models) |
 |---|---|---|---|
-| filesystem (U1) | 14 | +0.206 | 0.083 |
-| git (U2) | 12 | +0.027 | 0.083 |
+| filesystem (U1) | 14 | +0.206 | 0.097 |
+| git (U2) | 12 | +0.027 | 0.050 |
 | sqlite (U3) | 4 | -0.615 | 0.100 |
 
 At face value this runs **opposite** to H2's hypothesis: sqlite has the
 *lowest* schema complexity (its tools take one or two flat string
 arguments each, no nesting, no unions) but the *largest* degradation
-swing, while filesystem has the *highest* schema complexity but a
-middling swing. **This is not treated as evidence against H2** — with only
+swing, while git has the *lowest* degradation swing despite middling
+schema complexity, and filesystem (the *highest*-SCI tier) falls in
+between. **This is not treated as evidence against H2** — with only
 3 tiers, a correlation coefficient over 3 points is not meaningful in
 either direction, and is not reported as a rho for that reason (spec §4.3
 calls for a regression once "enough tool schemas across tiers" exist; 3 is
@@ -396,7 +413,7 @@ should be carried forward regardless of sample size.
 
 Across every (model, quant, tier) combination measured so far, TSR is never
 higher than SVR-MCP, and is often meaningfully lower (e.g. Llama-3.2-1B
-Q4_K_M on U2: SVR-MCP=0.600 but TSR=0.200 — 3 of the 6 schema-valid calls
+Q4_K_M on U2: SVR-MCP=0.600 but TSR=0.300 — 2 of the 6 schema-valid calls
 still failed to produce the *correct* outcome; Qwen3-0.6B Q4_K_M on U3:
 SVR-MCP=0.800 but TSR=0.500 — 3 of 8 schema-valid calls used a
 syntactically fine but semantically wrong query). This confirms the
@@ -405,6 +422,21 @@ sufficient for a tool call to actually do what was asked, and that gap is
 not uniform across quants, model families, or tiers, so a leaderboard
 built on SVR-MCP alone would overstate real-world reliability — the sqlite
 tier makes this most visible of the three.
+
+## Leaderboard and reliability-per-VRAM (η, spec §4.6)
+
+```
+quantmcp leaderboard results/ --output-dir leaderboard
+```
+
+Builds `leaderboard/mcp_leaderboard.{json,md}`, `mcp_runs.csv` (one row per
+real result file, with η computed as `(0.5*SVR-MCP + 0.5*TSR) /
+peak_VRAM_GB` — equal weighting, since the spec gives no other guidance),
+and `mcp_tier_breakdown.csv` (mean SVR-MCP/TSR/η per tier, annotated with
+that tier's real SCI from the table above). This is the MCP-native
+leaderboard; the vendored, BFCL-shaped `report/leaderboard.py` is left
+as-is per the reuse rule rather than retrofitted, since its svr/tsa/ac/fcr
+columns have no server-tier concept to extend cleanly.
 
 ## Reference server versions used
 
