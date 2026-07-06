@@ -48,6 +48,8 @@ class RunResult:
             "n": self.metrics.n,
             "svr_mcp": self.metrics.svr_mcp,
             "tsr": self.metrics.tsr,
+            "svr_mcp_ci": list(self.metrics.svr_mcp_ci),
+            "tsr_ci": list(self.metrics.tsr_ci),
             # "svr" alias kept for report/leaderboard.py (vendored, BFCL-shaped
             # column reader) until it's extended for MCP metrics in Phase 3.
             "svr": self.metrics.svr_mcp,
@@ -153,7 +155,7 @@ async def run_eval_async(
             peak_vram_mb = max(peak_vram_mb or 0.0, vram_mb)
         mcp_server_version = mcp_server_version or server_version
 
-    metrics = compute_metrics(outcomes)
+    metrics = compute_metrics(outcomes, bootstrap_seed=cfg.seed)
 
     fixture_files: list[Path] = []
     if fixture_dir is not None and fixture_dir.exists():

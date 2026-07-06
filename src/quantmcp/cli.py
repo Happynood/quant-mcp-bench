@@ -169,7 +169,12 @@ def run_cmd(
     out = output_path or "result.json"
     write_result(result, out)
     click.echo(f"Result written to {out}")
-    click.echo(f"  SVR-MCP={result.metrics.svr_mcp:.3f}  TSR={result.metrics.tsr:.3f}")
+    svr_lo, svr_hi = result.metrics.svr_mcp_ci
+    tsr_lo, tsr_hi = result.metrics.tsr_ci
+    click.echo(
+        f"  SVR-MCP={result.metrics.svr_mcp:.3f} [{svr_lo:.3f}, {svr_hi:.3f}]"
+        f"  TSR={result.metrics.tsr:.3f} [{tsr_lo:.3f}, {tsr_hi:.3f}]"
+    )
 
     if manifest_path:
         write_manifest(result.manifest, manifest_path)

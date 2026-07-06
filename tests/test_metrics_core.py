@@ -71,6 +71,27 @@ def test_compute_metrics_mixed():
     assert abs(m.tsr - 0.25) < 1e-9
 
 
+def test_compute_metrics_bootstrap_ci_brackets_the_point_estimate():
+    outcomes = [
+        InstanceOutcome(task_id=str(i), parse_succeeded=True, svr_pass=(i % 2 == 0), tsr_pass=True)
+        for i in range(20)
+    ]
+    m = compute_metrics(outcomes, bootstrap_seed=0)
+    lo, hi = m.svr_mcp_ci
+    assert lo <= m.svr_mcp <= hi
+    assert m.tsr_ci == (1.0, 1.0)
+
+
+def test_compute_metrics_ci_is_reproducible_with_fixed_seed():
+    outcomes = [
+        InstanceOutcome(task_id=str(i), parse_succeeded=True, svr_pass=(i % 3 == 0), tsr_pass=True)
+        for i in range(15)
+    ]
+    m1 = compute_metrics(outcomes, bootstrap_seed=7)
+    m2 = compute_metrics(outcomes, bootstrap_seed=7)
+    assert m1.svr_mcp_ci == m2.svr_mcp_ci
+
+
 def test_execution_result_dataclass_shape():
     call = ParsedCall(name="add", arguments={"a": 1, "b": 2})
     result = ExecutionResult(call=call, ok=True, raw_result={"content": []})
