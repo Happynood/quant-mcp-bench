@@ -591,55 +591,78 @@ repeats to build a real empirical distribution over Δ, not the 3 used
 here (3 is enough to demonstrate the instability and get a noticeably
 more stable point estimate; it is not enough for a rigorous CI).
 
-### Schema Complexity Index vs. degradation (H2) — preliminary, 4 tiers now
+### Schema Complexity Index vs. degradation (H2) — array-recursion bug fixed (Phase 7)
 
 H2 asks whether a tier's Schema Complexity Index (SCI, spec §4.3, computed
 from each tier's live tool schemas) predicts how much quantization
-degradation that tier shows. Real SCI was computed across all 39 tools
-from all four live tiers (filesystem, git, sqlite, memory) in a single
-z-normalized corpus (recomputed from scratch, not just extended, once U4
-was added — the z-normalization is corpus-relative, so adding a 4th tier
-shifts every tier's score slightly versus the original 3-tier numbers):
+degradation that tier shows. Phase 6 flagged a real bug here: `_max_depth`
+(and, it turned out, `_prop_count` too) stopped at an array-typed
+property instead of recursing into its `items` schema, so an
+array-of-objects argument like memory's `create_entities` scored the same
+shallow depth as a flat string argument. **Fixed in Phase 7**
+(`schema/complexity.py`): both functions now recurse through `items` the
+same way they already recursed through `properties`. `_prop_count`
+deliberately still counts a nested *plain-object* property as a single
+property at the parent level (that was never the disclosed bug — only the
+array-items gap was) — see the docstrings for the exact reasoning, and
+`tests/test_schema_complexity.py` for regression tests using the real
+`create_entities`-shaped nested-array schema.
 
-| Tier | Tools | Mean SCI | Mean \|Δ SVR-MCP\| across quants (both models) |
-|---|---|---|---|
-| filesystem (U1) | 14 | +0.333 | 0.093 (3-repeat mean) |
-| git (U2) | 12 | +0.115 | 0.044 (3-repeat mean) |
-| memory (U4) | 9 | -0.359 | 0.017 (single run) |
-| sqlite (U3) | 4 | -0.515 | 0.100 (3-repeat mean) |
+Effect on the memory tier specifically — the tier the bug most affected,
+recomputed from the identical live 9-tool schema dump (old numbers
+reconstructed from the pre-fix code for a true apples-to-apples diff, not
+re-derived from memory):
 
-At face value this still runs **opposite** to H2's hypothesis, now with a
-4th point that doesn't resolve it either way: memory has the *second-lowest*
-SCI yet the *smallest* degradation swing of all four tiers, while sqlite
-(lowest SCI) has the largest. **This is not treated as evidence against
-H2** — 4 tiers is still nowhere near enough for a correlation coefficient
-to mean anything (spec §4.3 calls for a regression once "enough tool
-schemas across tiers" exist; 4 is not enough), and U4's number is a single
-run, not a 3-repeat mean like the other three.
+| Tool | depth (old→new) | prop_count (old→new) |
+|---|---|---|
+| create_entities | 1→4 | 1→4 |
+| create_relations | 1→3 | 1→4 |
+| add_observations | 1→4 | 1→3 |
+| delete_entities | 1→2 | 1→1 |
+| delete_observations | 1→4 | 1→3 |
+| delete_relations | 1→3 | 1→4 |
+| read_graph | 0→0 | 0→0 |
+| search_nodes | 1→1 | 1→1 |
+| open_nodes | 1→2 | 1→1 |
 
-Two distinct methodological caveats now stand alongside each other:
+Every array-of-objects tool (6 of 9) gained real depth/prop_count; the two
+zero-argument/flat tools (`read_graph`, `search_nodes`) are correctly
+unaffected. Recomputed SCI across the same 39-tool, 4-tier corpus (z-scores
+are corpus-relative, so every tier's number shifts slightly even though
+only memory's raw features changed):
 
-1. **(Phase 3) SCI measures schema shape, not argument-content
-   difficulty.** sqlite's `query: string` parameter is trivially simple by
-   every SCI component, yet composing a correct SQL query for a natural-
-   language question is exactly where both models struggled. This still
-   explains sqlite's outsized degradation despite its low SCI.
-2. **(Phase 6, new) `_max_depth`'s nesting metric doesn't traverse array
-   items.** Memory's dominant tool shape is an *array of objects*
-   (`entities: [{name, entityType, observations}, ...]`) — genuinely
-   deeply nested by inspection, but `schema/complexity.py::_max_depth`
-   only recurses into a schema's `properties` dict, and JSON Schema nests
-   object structure inside array-typed properties via `items`, not
-   `properties`. An array-of-objects argument therefore scores depth 1,
-   identical to a flat string argument. This likely explains why memory's
-   SCI came out low despite being the tier spec §5 specifically flagged as
-   having "the most nested/union-heavy schemas." Not fixed in this pass —
-   changing the depth formula mid-project would silently invalidate the
-   already-published 3-tier SCI numbers without re-deriving them, and the
-   spec's SCI formula (§4.3) doesn't specify array-traversal semantics —
-   but disclosed here because it materially affects how memory's low SCI
-   number should be read: as an artifact of the metric's array blind spot,
-   not as evidence the tier is actually schema-simple.
+| Tier | Tools | Mean SCI (old, buggy) | Mean SCI (new, fixed) | Mean \|Δ SVR-MCP\| across quants (both models) |
+|---|---|---|---|---|
+| filesystem (U1) | 14 | +0.333 | +0.229 | 0.093 (3-repeat mean) |
+| git (U2) | 12 | +0.115 | -0.163 | 0.044 (3-repeat mean) |
+| memory (U4) | 9 | **-0.359** | **+0.194** | 0.017 (single run) |
+| sqlite (U3) | 4 | -0.515 | -0.562 | 0.100 (3-repeat mean) |
+
+This confirms the Phase 6 suspicion directly: memory was undercounted as
+the *second-lowest*-complexity tier when it is actually the
+*second-highest* once its array-of-objects arguments are scored correctly
+— a swing of +0.55 in z-score units, the largest move of any tier. The
+ranking is now filesystem > memory > git > sqlite instead of filesystem >
+git > memory > sqlite.
+
+**This still does not resolve H2 either way.** Even with the corrected
+numbers, the pattern runs opposite to the hypothesis at face value: sqlite
+(now unambiguously the lowest-SCI tier) still has the joint-largest
+degradation swing, and memory (now the second-highest-SCI tier) still has
+the smallest. The one methodological caveat that mattered here (the array
+blind spot) is now fixed; the other one from Phase 3 still stands and is
+arguably the more important one for explaining sqlite specifically:
+
+1. **SCI measures schema shape, not argument-content difficulty.**
+   sqlite's `query: string` parameter is trivially simple by every SCI
+   component (now more so than ever, since it's the only tier with no
+   array-of-objects arguments to correct), yet composing a correct SQL
+   query for a natural-language question is exactly where both models
+   struggled. This still explains sqlite's outsized degradation despite
+   its low SCI, independent of the array-recursion fix.
+
+See "Statistical power for H2 (Phase 7)" below for the sample-size fix
+(more than 4 aggregate tier-level points) attempted alongside this bug fix.
 
 ### The SVR-vs-TSR gap (H4)
 

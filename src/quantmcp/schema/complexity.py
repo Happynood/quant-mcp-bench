@@ -19,15 +19,46 @@ from typing import Any
 
 
 def _max_depth(schema: dict[str, Any], depth: int = 0) -> int:
-    props = schema.get("properties", {}) if isinstance(schema, dict) else {}
-    if not props:
+    """Depth of the deepest nested property, traversing both object
+    `properties` and array `items` schemas.
+
+    Originally only recursed through `properties`, so an array-of-objects
+    argument (e.g. the memory tier's `create_entities([{name, entityType,
+    observations: [...]}, ...])`) stopped at the array wrapper itself: an
+    array schema has no `properties` key, so the old code returned
+    immediately instead of continuing into `items`, undercounting any
+    tool whose real complexity lives inside its array arguments.
+    """
+    if not isinstance(schema, dict):
         return depth
-    child_depths = (_max_depth(v, depth + 1) for v in props.values() if isinstance(v, dict))
+    props = schema.get("properties", {})
+    items = schema.get("items")
+    child_depths = [_max_depth(v, depth + 1) for v in props.values() if isinstance(v, dict)]
+    if isinstance(items, dict):
+        child_depths.append(_max_depth(items, depth + 1))
     return max(child_depths, default=depth)
 
 
 def _prop_count(schema: dict[str, Any]) -> int:
-    return len(schema.get("properties", {}))
+    """Count of tool-argument properties, including those reachable only by
+    traversing into an array property's `items` schema (see `_max_depth`'s
+    docstring for the same array-items gap). Deliberately still counts a
+    nested *object* property's own sub-properties as a single property at
+    the parent level, unchanged from the original design -- only the
+    array-items gap was ever measured as wrong, so only that gap is fixed.
+    """
+    if not isinstance(schema, dict):
+        return 0
+    props = schema.get("properties", {})
+    if not isinstance(props, dict):
+        return 0
+    count = len(props)
+    for v in props.values():
+        if isinstance(v, dict):
+            items = v.get("items")
+            if isinstance(items, dict):
+                count += _prop_count(items)
+    return count
 
 
 def _has_union(schema: dict[str, Any]) -> bool:
