@@ -14,38 +14,53 @@ structurally validated.
 ## Status
 
 Real GPU results across four MCP server tiers (`filesystem`, `git`,
-`sqlite`, `memory`) and two model families (Qwen3-0.6B, Llama-3.2-1B), each
-at four quantization levels (fp16, Q8_0, Q5_K_M, Q4_K_M). Full methodology,
-honest scope limitations, and every real number are in
+`sqlite`, `memory`) and three model families (Qwen3-0.6B, Qwen3-1.7B,
+Llama-3.2-1B) — Qwen3-0.6B and Llama-3.2-1B at four quantization levels
+(fp16, Q8_0, Q5_K_M, Q4_K_M each), Qwen3-1.7B at three (Q8_0, Q5_K_M,
+Q4_K_M — its bf16 weights don't fit this project's 4GB card at a usable
+context length, a real, confirmed limitation, not a gap; see
+[`docs/RUN_REAL.md`](docs/RUN_REAL.md)). Full methodology, honest scope
+limitations, and every real number are in
 [`docs/RUN_REAL.md`](docs/RUN_REAL.md) — read that before citing anything
 here.
 
 ## Headline findings so far
 
-- **Cross-Benchmark Consistency (CBC) is negative.** QuantCall's
-  BFCL-measured quantization degradation pattern does not carry over
-  cleanly to real MCP tool schemas for either model family tested. The
-  exact magnitude took three independent computations to stabilize
-  (-0.824 on the first run, -0.265 on an identical single re-run, -0.551
-  once averaged over 3 repeats per config) — the sign held throughout, the
-  magnitude did not until repeats were averaged. Treat -0.551 (n=6 pairs)
-  as the current best estimate, not a settled final number. Full
-  convergence table in [`docs/RUN_REAL.md`](docs/RUN_REAL.md).
+- **Cross-Benchmark Consistency (CBC) is negative, and got more negative
+  with a 3rd model family, not less.** QuantCall's BFCL-measured
+  quantization degradation pattern does not carry over cleanly to real
+  MCP tool schemas. With 2 families the estimate was -0.551 (n=6 pairs,
+  itself the product of 3 increasingly-averaged computations — see
+  [`docs/RUN_REAL.md`](docs/RUN_REAL.md) for that convergence story).
+  Adding **Qwen3-1.7B** as a 3rd family — a real within-family size
+  contrast against Qwen3-0.6B, not just another family — moved CBC to
+  **-0.755 (n=8 pairs)**: the sign didn't change, but the magnitude
+  strengthened. Qwen3-1.7B itself shows the same flat, quantization-robust
+  pattern as its smaller 0.6B sibling, just at a uniformly higher absolute
+  level — support for H3 (model family predicts sensitivity, not size)
+  from an actual size contrast, not only a family-vs-family one. Still
+  n=8, still too few for a rigorous p-value on a Spearman correlation.
 - **Real MCP schemas surface failure modes BFCL's curated schemas don't.**
   Llama-3.2-1B shifts between echoing back a tool's JSON *schema* instead
   of calling it (at fp16/Q8_0) and a flatter, sometimes-correct call shape
   (at Q5_K_M/Q4_K_M) — a qualitative format shift, not a smooth accuracy
   decline. On the sqlite tier, both models sometimes hallucinate a
   fictitious database schema or refuse tasks a real query could answer.
-- **Schema complexity (SCI) does not obviously predict degradation** in
-  the 4 tiers measured so far — if anything, the simplest-schema tier
-  (sqlite) shows the largest degradation swing. Only 4 tiers exist so far,
-  which is too few for a real correlation; this is flagged as a
-  methodological question (SCI measures schema *shape*, not argument
-  *content* difficulty — and the depth component doesn't traverse
-  array-of-object arguments, likely underscoring the `memory` tier's
-  actual complexity) worth carrying into later tiers, not a settled
-  result.
+- **A real SCI bug was found and fixed, and it changed which tier looked
+  simplest.** `_max_depth`/`_prop_count` didn't recurse into array `items`,
+  so the `memory` tier's array-of-objects tools (`create_entities` etc.)
+  scored as flat as a single string argument. Fixed: memory's mean SCI
+  moved from -0.359 (2nd-lowest of 4 tiers) to **+0.194 (2nd-highest)** —
+  it had been undercounted exactly as suspected.
+- **With the bug fixed and the sample size increased from 4 tier-level
+  points to 38 tool-level points, H2 is a genuinely better-powered null,
+  not just a bigger version of the same one.** Per-tool SCI-vs-Δ
+  regression: slope=+0.140, 95% CI=[-0.007, +0.315] (n=38). The *sign*
+  actually flipped from the tier-level view (which ran opposite to H2) to
+  positive — the direction H2 predicts — but the interval still spans
+  zero, so this isn't statistically significant. Full writeup and the
+  reproducible `quantmcp sci-regression` command in
+  [`docs/RUN_REAL.md`](docs/RUN_REAL.md).
 - **SVR-MCP (schema-valid call) and TSR (actually correct outcome) diverge**
   — passing schema validation never implies task success, and the gap is
   largest on the sqlite tier.
@@ -89,6 +104,13 @@ numbers:
 uv run quantmcp cross-bench results/*/*.result.json --bfcl-results docs/bfcl_reference_svr.json
 ```
 
+Compute the per-tool SCI-vs-Δ regression (H2) from real result data and a
+live/frozen tool-schema dump:
+
+```bash
+uv run quantmcp sci-regression results/*/*.result.json --schemas docs/live_schemas_phase7.json
+```
+
 ## Repository layout
 
 - `src/quantmcp/servers/` — MCP server launch wrappers (`filesystem`,
@@ -100,7 +122,8 @@ uv run quantmcp cross-bench results/*/*.result.json --bfcl-results docs/bfcl_ref
 - `src/quantmcp/metrics/` — SVR-MCP/TSR (new) plus vendored deltas/
   bootstrap-CI/Spearman-correlation helpers.
 - `src/quantmcp/report/` — leaderboard, per-server breakdown, reliability-
-  per-VRAM (η), and cross-benchmark (CBC) computation.
+  per-VRAM (η), cross-benchmark (CBC), and per-tool SCI-vs-Δ regression
+  (H2) computation.
 - `results/` — real `result.json` + manifest per (model, quant, tier); see
   [`CONTRIBUTING.md`](CONTRIBUTING.md) to add your own hardware's numbers.
 - `docs/RUN_REAL.md` — the actual, current source of truth for every
