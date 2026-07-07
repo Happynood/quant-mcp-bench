@@ -85,6 +85,7 @@ async def _run_one_instance(
         env = dict(server_env or {})
         env.setdefault("QUANTMCP_U0_ROOT", str(instance_root))
         env.setdefault("QUANTMCP_U3_ROOT", str(instance_root))
+        env.setdefault("MEMORY_FILE_PATH", str(instance_root / "memory.json"))
         # Some reference servers (e.g. filesystem) take their allowed root as a
         # positional CLI arg rather than an env var/cwd, and that root is only
         # known once the sandbox instance exists — resolve the "{root}"

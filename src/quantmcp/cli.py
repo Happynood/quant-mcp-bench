@@ -65,6 +65,15 @@ def _server_command_for_tier(tier: str) -> tuple[str, list[str], Path | None, Pa
             _PACKAGE_ROOT / "tasks" / "fixtures" / "u3_sqlite",
             _PACKAGE_ROOT / "tasks" / "fixtures" / "u3_sqlite_tasks.yaml",
         )
+    if tier == "memory":
+        from quantmcp.servers.memory import ARGS_TEMPLATE, COMMAND
+
+        return (
+            COMMAND,
+            list(ARGS_TEMPLATE),
+            _PACKAGE_ROOT / "tasks" / "fixtures" / "u4_memory",
+            _PACKAGE_ROOT / "tasks" / "fixtures" / "u4_memory_tasks.yaml",
+        )
     raise click.ClickException(f"Server tier {tier!r} is not implemented yet (spec §10 roadmap)")
 
 

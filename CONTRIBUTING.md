@@ -71,7 +71,8 @@ This runs: `ruff check`, `ruff format --check`, `pyright`, the non-
 integration test suite, and the smoke end-to-end test (mock backend + the
 in-repo U0 toy server) — no network, no download, no GPU required. Run
 `make test-integration` separately if you have Node.js/`npx` and `uvx`
-available and want to exercise the real filesystem/git/sqlite servers.
+available and want to exercise the real filesystem/git/sqlite/memory
+servers.
 
 ## Hard Rules
 

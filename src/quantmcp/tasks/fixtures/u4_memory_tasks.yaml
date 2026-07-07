@@ -1,0 +1,82 @@
+# U4 memory-tier task fixture (spec §5, stretch). The official reference
+# `memory` (knowledge-graph) server is confirmed still current at the npm
+# registry (@modelcontextprotocol/server-memory, checked 2026-07-07) —
+# see servers/memory.py's module docstring.
+# Fixture: u4_memory/memory.json — a small seed knowledge graph (4 entities,
+# 3 relations), newline-delimited JSON, deterministic content.
+# {root}/memory.json is set via the MEMORY_FILE_PATH env var at launch, so
+# no task instruction needs to mention a path (same reasoning as U3 sqlite).
+# Instructions are phrased naturalistically and never name the tool to
+# call, for the same reason as the U1/U2/U3 tasks. Every checker below was
+# verified against this server's real response/state before being trusted
+# (tests/test_servers_memory.py).
+tasks:
+  - id: u4-read-graph
+    instruction: "Give me everything currently stored in the knowledge graph."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Project Falcon"}
+
+  - id: u4-search-acme
+    instruction: "Who works at Acme Corp?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Bob"}
+
+  - id: u4-delete-leads-relation
+    instruction: >-
+      There's a record that Alice leads Project Falcon — that's no longer
+      true, delete that specific relation.
+    checker:
+      name: file_lacks
+      args:
+        filename: memory.json
+        contains: '"to":"Project Falcon","relationType":"leads"'
+
+  - id: u4-open-alice
+    instruction: "What do you know about Alice specifically?"
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Berlin"}
+
+  - id: u4-open-alice-and-bob
+    instruction: "Look up both Alice and Bob and tell me what's on file for each."
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Munich"}
+
+  - id: u4-add-bob-hamburg
+    instruction: "Bob just moved to Hamburg — add that as a new fact about him."
+    checker:
+      name: file_contains
+      args: {filename: memory.json, contains: "Lives in Hamburg"}
+
+  - id: u4-create-carol
+    instruction: >-
+      We hired someone new named Carol, a Designer — record her in the
+      system.
+    checker:
+      name: file_contains
+      args: {filename: memory.json, contains: '"name":"Carol","entityType":"Designer"'}
+
+  - id: u4-carol-reports-to-alice
+    instruction: "Record that Carol reports to Alice."
+    checker:
+      name: file_contains
+      args:
+        filename: memory.json
+        contains: '"from":"Carol","to":"Alice","relationType":"reports_to"'
+
+  - id: u4-delete-acme
+    instruction: "Acme Corp doesn't exist anymore — remove it entirely from the graph."
+    checker:
+      name: file_lacks
+      args: {filename: memory.json, contains: '"name":"Acme Corp"'}
+
+  - id: u4-delete-alice-german
+    instruction: >-
+      Alice has an observation on file that says "Speaks German and
+      English" — remove exactly that fact.
+    checker:
+      name: file_lacks
+      args: {filename: memory.json, contains: "Speaks German and English"}

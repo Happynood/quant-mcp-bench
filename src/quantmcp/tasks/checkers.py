@@ -18,6 +18,17 @@ def file_contains(state: SandboxState, filename: str, contains: str) -> bool:
     return path.exists() and contains in path.read_text()
 
 
+def file_lacks(state: SandboxState, filename: str, contains: str) -> bool:
+    """Pass if `filename` exists under the sandbox root and does NOT contain
+    `contains` — for delete-style tools (delete_entities, delete_relations,
+    delete_observations, ...) whose success text ("Entities deleted
+    successfully") doesn't reveal whether the *correct* thing was deleted.
+    Mirrors `sqlite_query_scalar`'s reasoning for a JSON/text-file-backed
+    server instead of a database."""
+    path = state.root / filename
+    return path.exists() and contains not in path.read_text()
+
+
 def call_result_number_equals(state: SandboxState, index: int, value: float) -> bool:
     """Pass if the `index`-th executed call succeeded and its text content
     parses as a float equal to `value` (e.g. the U0 `add` tool's return)."""
@@ -88,6 +99,7 @@ def sqlite_query_scalar(state: SandboxState, db_filename: str, query: str, expec
 
 CHECKERS: dict[str, Any] = {
     "file_contains": file_contains,
+    "file_lacks": file_lacks,
     "call_result_number_equals": call_result_number_equals,
     "call_result_contains": call_result_contains,
     "dir_exists": dir_exists,

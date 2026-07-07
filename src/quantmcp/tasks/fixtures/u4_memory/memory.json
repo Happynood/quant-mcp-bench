@@ -1,0 +1,7 @@
+{"type":"entity","name":"Alice","entityType":"Person","observations":["Works at Acme Corp","Lives in Berlin","Speaks German and English"]}
+{"type":"entity","name":"Bob","entityType":"Person","observations":["Works at Acme Corp","Lives in Munich"]}
+{"type":"entity","name":"Acme Corp","entityType":"Company","observations":["Founded in 2010","Headquartered in Berlin"]}
+{"type":"entity","name":"Project Falcon","entityType":"Project","observations":["Launched in 2024"]}
+{"type":"relation","from":"Alice","to":"Acme Corp","relationType":"works_at"}
+{"type":"relation","from":"Bob","to":"Acme Corp","relationType":"works_at"}
+{"type":"relation","from":"Alice","to":"Project Falcon","relationType":"leads"}
