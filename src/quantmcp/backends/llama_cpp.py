@@ -80,6 +80,7 @@ class LlamaCppBackend(Backend):
         temperature: float = 0.0,
         chat_format: str | None = None,
         verbose: bool = False,
+        n_threads: int | None = None,
         decoding: str = "free",
     ) -> None:
         _preload_cuda_libs()
@@ -96,6 +97,7 @@ class LlamaCppBackend(Backend):
             n_gpu_layers=n_gpu_layers,
             verbose=verbose,
             chat_format=chat_format,
+            n_threads=n_threads,
         )
 
     @property

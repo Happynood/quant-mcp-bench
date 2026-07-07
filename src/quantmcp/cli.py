@@ -92,6 +92,8 @@ def _build_backend(cfg: QuantMCPConfig) -> Any:
             max_tokens=cfg.llama_cpp.max_tokens,
             temperature=cfg.temperature,
             chat_format=cfg.llama_cpp.chat_format,
+            verbose=cfg.llama_cpp.verbose,
+            n_threads=cfg.llama_cpp.n_threads,
             decoding=cfg.decoding,
         )
     if cfg.backend == "transformers":

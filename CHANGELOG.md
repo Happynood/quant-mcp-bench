@@ -61,3 +61,10 @@
   incomparable to BFCL's SVR (which also measures tool selection).
   Rewritten to be naturalistic; every checker re-verified against the
   real server's intended call before any dependent number was trusted.
+- `llama_cpp.verbose` and `llama_cpp.n_threads` were accepted by the config
+  schema but silently had no effect: `verbose` was never forwarded from the
+  CLI's backend builder, and `n_threads` wasn't even accepted by
+  `LlamaCppBackend`'s constructor. Wired both through; added CLI-layer
+  tests covering `compare`, `validate-config`, `leaderboard`, `sweep`, the
+  `run` command's empty-task-list error path, and the backend-selection
+  branch for every backend kind.
