@@ -92,3 +92,42 @@ def test_compute_cbc_raises_with_fewer_than_two_pairs(
 
     with pytest.raises(ValueError):
         compute_cbc(files, bfcl_results_path)
+
+
+def test_cross_bench_cli_writes_output_json(
+    tmp_path: Path, bfcl_results_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    import quantmcp.report.cross_bench as cb
+    from quantmcp.cli import main
+
+    monkeypatch.setattr(cb, "_MODEL_FAMILY_MARKERS", ["FamilyA", "FamilyB"])
+
+    files = [
+        _write_result(tmp_path, "a-fp16.json", "FamilyA-x.gguf", "fp16", 10, 0.9),
+        _write_result(tmp_path, "a-q4.json", "FamilyA-x.gguf", "Q4_K_M", 10, 0.5),
+        _write_result(tmp_path, "b-fp16.json", "FamilyB-x.gguf", "fp16", 10, 0.2),
+        _write_result(tmp_path, "b-q4.json", "FamilyB-x.gguf", "Q4_K_M", 10, 0.3),
+    ]
+    output_path = tmp_path / "cbc.json"
+
+    from click.testing import CliRunner
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "cross-bench",
+            *[str(f) for f in files],
+            "--bfcl-results",
+            str(bfcl_results_path),
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output_path.exists()
+    data = json.loads(output_path.read_text())
+    assert data["n_pairs"] == 2
+    assert data["rho"] == pytest.approx(1.0)
+    assert len(data["table"]) == 2

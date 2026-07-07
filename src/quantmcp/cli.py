@@ -233,7 +233,10 @@ def compare_cmd(result_files: tuple[str, ...], fmt: str, output_path: str | None
 @main.command("cross-bench")
 @click.argument("result_files", nargs=-1, required=True, type=click.Path(exists=True))
 @click.option("--bfcl-results", required=True, type=click.Path(exists=True))
-def cross_bench_cmd(result_files: tuple[str, ...], bfcl_results: str) -> None:
+@click.option("--output", "output_path", default=None, type=click.Path())
+def cross_bench_cmd(
+    result_files: tuple[str, ...], bfcl_results: str, output_path: str | None
+) -> None:
     """Compute Cross-Benchmark Consistency (CBC, spec §4.5) vs QuantCall results."""
     from quantmcp.report.cross_bench import compute_cbc
 
@@ -249,6 +252,38 @@ def cross_bench_cmd(result_files: tuple[str, ...], bfcl_results: str) -> None:
             f"{row['delta_svr_bfcl']:<14.3f}{row['delta_svr_mcp']:<12.3f}"
         )
     click.echo(f"\nCBC (Spearman rho) = {result.rho:.3f}  (n={result.n_pairs} pairs)")
+
+    if output_path is not None:
+        payload = {"rho": result.rho, "n_pairs": result.n_pairs, "table": result.table}
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(output_path).write_text(json.dumps(payload, indent=2))
+        click.echo(f"Written to {output_path}")
+
+
+@main.command("dump-schemas")
+@click.option("--tiers", default="filesystem,git,sqlite", show_default=True)
+@click.option("--output", "output_path", required=True, type=click.Path())
+def dump_schemas_cmd(tiers: str, output_path: str) -> None:
+    """Dump each tier's live tool schemas to a frozen JSON file (spec §4.3/§10)."""
+    import asyncio
+
+    from quantmcp.schema.dump import dump_tier_schemas
+
+    tier_list = [t.strip() for t in tiers.split(",") if t.strip()]
+
+    async def _run() -> list[dict[str, Any]]:
+        all_schemas: list[dict[str, Any]] = []
+        for tier in tier_list:
+            command, args, fixture_dir, _ = _server_command_for_tier(tier)
+            all_schemas.extend(await dump_tier_schemas(tier, command, args, fixture_dir))
+        return all_schemas
+
+    schemas = asyncio.run(_run())
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(output_path).write_text(json.dumps(schemas, indent=2))
+    click.echo(
+        f"Dumped {len(schemas)} tool schema(s) across {len(tier_list)} tier(s) to {output_path}"
+    )
 
 
 @main.command("leaderboard")

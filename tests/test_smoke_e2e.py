@@ -99,3 +99,19 @@ def test_smoke_e2e_cli(smoke_config_path, tmp_path):
     assert mf.exists()
     data = json.loads(out.read_text())
     assert "svr_mcp" in data
+
+
+def test_dump_schemas_cli(tmp_path):
+    from click.testing import CliRunner
+
+    from quantmcp.cli import main
+
+    runner = CliRunner()
+    out = tmp_path / "schemas.json"
+    r = runner.invoke(main, ["dump-schemas", "--tiers", "u0", "--output", str(out)])
+
+    assert r.exit_code == 0, r.output
+    assert out.exists()
+    schemas = json.loads(out.read_text())
+    assert {s["name"] for s in schemas} == {"add", "write_note"}
+    assert all(s["tier"] == "u0" for s in schemas)
