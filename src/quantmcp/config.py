@@ -7,11 +7,12 @@ from __future__ import annotations
 # QuantMCPConfig itself is new: the top-level shape (server/tasks/sandbox
 # instead of tiers/bfcl_data_dir) reflects the MCP-server-driven pipeline
 # described in spec §6.2, not the BFCL tier system.
+import os
 from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class MockBackendConfig(BaseModel):
@@ -92,6 +93,15 @@ class QuantMCPConfig(BaseModel):
     hf: HFBackendConfig = Field(default_factory=HFBackendConfig)
     openai: OpenAIEndpointConfig = Field(default_factory=OpenAIEndpointConfig)
     vllm: VLLMBackendConfig = Field(default_factory=VLLMBackendConfig)
+
+    @field_validator("model")
+    @classmethod
+    def _expand_home_tilde(cls, v: str) -> str:
+        # Committed sweep configs use a portable "~/models/..." path rather
+        # than one machine's absolute home directory (see docs/RUN_REAL.md);
+        # expanding it here means the same config file actually works on
+        # anyone's machine instead of just the one it was authored on.
+        return os.path.expanduser(v)
 
 
 def load_config(path: str | Path) -> QuantMCPConfig:

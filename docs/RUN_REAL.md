@@ -69,12 +69,13 @@ done
 ```
 
 **Note on the committed sweep configs** (`configs/*-sweep/*.yaml`): their
-`model:` field is an absolute path from the machine these results were
-produced on (e.g. `~/models/...`). Replace it with wherever
-you actually downloaded the GGUF file (e.g. `~/models/...`, expanded to
-your own home directory) before running them — the configs are real,
-working examples of the harness, not a claim that this exact path exists
-on your machine.
+`model:` field uses a `~/models/...`-relative path rather than the specific
+machine's absolute home directory — `QuantMCPConfig` expands `~` at load
+time (`config.py`'s `_expand_home_tilde` validator), so these configs work
+unchanged as long as you download the GGUF files to `~/models/` on your own
+machine. If you use a different location, edit the path accordingly — the
+configs are real, working examples of the harness, not a claim that this
+exact layout exists on your machine.
 
 ## What has actually been run (Phase 1, superseded by Phase 2 below)
 
