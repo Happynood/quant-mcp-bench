@@ -751,22 +751,33 @@ quantmcp sci-regression results/*/*.result.json --schemas docs/live_schemas_phas
 Both the live schema dump and the regression's full 38-point output are
 committed under `docs/` for reproducibility instead of only reprinted here.
 
-**Result: slope = +0.140, 95% bootstrap CI = [-0.007, +0.315] (n=38).**
+**Result: slope = +0.045, 95% bootstrap CI = [-0.064, +0.170] (n=38).**
+This was computed after Part 3 added Qwen3-1.7B; the intermediate value
+computed right after this section's own task/tracking changes but before
+Qwen3-1.7B existed was +0.140, CI=[-0.007, +0.315] (also n=38 — the same
+38 tools, since Qwen3-1.7B doesn't add coverage for any tool the other two
+families didn't already exercise, but its real Q4_K_M pass-rate data does
+pool into the "degraded" side of several tools' Δ, shifting the slope
+down without changing its sign). Reported both, not just the final one,
+for the same reason CBC's own convergence history above is: a mid-stream
+number that gets silently replaced invites more trust than it deserves.
 
 This is a genuinely different picture from the tier-level aggregate above.
 The tier-level view said the relationship ran *opposite* to H2 (lowest-SCI
 tier had the largest degradation). The tool-level view says the opposite
 of that: the slope is **positive** — higher-SCI tools tend to degrade
 *more*, which is the direction H2 actually predicts — but the confidence
-interval still spans zero (barely: the lower bound is -0.007, a hair below
-zero), so this is not a statistically significant relationship at n=38.
+interval spans zero comfortably at the final n=38 figure (it was only a
+hair below zero in the pre-Qwen3-1.7B intermediate value), so this is not
+a statistically significant relationship either way.
 **Neither the tier-level nor the tool-level analysis lets H2 be called
 resolved.** What changed is *why* it isn't resolved: not "too few points to
 say anything" (the original problem, now fixed — 38 is a real sample), but
 "a real, larger sample shows a relationship in the predicted direction that
 individual tool-level noise doesn't let it clear significance." That is a
-meaningfully stronger (if still negative) result than the original
-4-point analysis could ever produce, and the two caveats already on record
+meaningfully stronger (if still statistically null) result than the
+original 4-point analysis could ever produce, and the two caveats already
+on record
 (SCI measures shape not argument-content difficulty; single-run Δ per tool
 is noisier than a multi-repeat tier aggregate, since most tools here have
 only 2-4 task instances total per quant level, not the 30-120 pooled

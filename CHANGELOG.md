@@ -33,7 +33,12 @@
   per-family baseline-quant override so `compute_cbc` no longer silently
   drops a family with no fp16 entry. CBC recomputed with all 3 families:
   rho=-0.755 (n=8, up from n=6/-0.551 with 2 families) — sign unchanged,
-  magnitude strengthened, not weakened.
+  magnitude strengthened, not weakened. Qwen3-1.7B's real Q4_K_M data also
+  pools into the part 2 per-tool H2 regression's degraded-quant side (it
+  shares tools with the other two families); re-running it afterward moved
+  the slope from +0.140 to +0.045 (95% CI [-0.064, +0.170], still n=38,
+  sign unchanged) — both values reported in docs/RUN_REAL.md, not just the
+  final one.
 - Phase 0: Project skeleton — vendored Backend/parsing/validation/metrics
   deltas+stats/report layers from `quant-toolcall-bench`, new MCP-specific
   layers (servers, execution/sandbox+dispatcher, tasks, schema/complexity,

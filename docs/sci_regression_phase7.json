@@ -1,91 +1,91 @@
 {
   "n": 38,
-  "slope": 0.139814565106369,
-  "intercept": -0.09601280808712427,
+  "slope": 0.04525710020777434,
+  "intercept": -0.19316138248868986,
   "slope_ci": [
-    -0.006507950716546491,
-    0.3151793395771287
+    -0.06415019335008043,
+    0.17006733606230687
   ],
   "points": [
     {
       "tool": "add_observations",
       "tier": "memory",
       "sci": 0.6888542830121955,
-      "delta_svr": 0.5,
+      "delta_svr": 0.16666666666666669,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "create_directory",
       "tier": "filesystem",
       "sci": 0.020722911003770605,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "create_entities",
       "tier": "memory",
       "sci": 0.8636827787037236,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "create_relations",
       "tier": "memory",
       "sci": 0.7221116393497607,
-      "delta_svr": 0.5,
+      "delta_svr": 0.16666666666666669,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "delete_entities",
       "tier": "memory",
       "sci": -0.17573925057664752,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "delete_observations",
       "tier": "memory",
       "sci": 0.6907859018746778,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "delete_relations",
       "tier": "memory",
       "sci": 0.6139409830507588,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "describe_table",
       "tier": "sqlite",
       "sci": -0.4467288537169162,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 4,
-      "n_quant": 4
+      "n_quant": 6
     },
     {
       "tool": "directory_tree",
       "tier": "filesystem",
       "sci": 0.5650535718221583,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "edit_file",
       "tier": "filesystem",
       "sci": 1.0746490703896492,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "get_file_info",
@@ -93,7 +93,7 @@
       "sci": -0.006319753070979872,
       "delta_svr": -0.5,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_add",
@@ -101,7 +101,7 @@
       "sci": -0.056927701897102584,
       "delta_svr": -0.5,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_branch",
@@ -109,15 +109,15 @@
       "sci": 0.3045772070078818,
       "delta_svr": 0.0,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_checkout",
       "tier": "git",
       "sci": -0.34530187479971086,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_commit",
@@ -125,7 +125,7 @@
       "sci": -0.31439597299999605,
       "delta_svr": 0.0,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_create_branch",
@@ -133,15 +133,15 @@
       "sci": 0.16644946970351512,
       "delta_svr": 0.0,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_diff",
       "tier": "git",
       "sci": -0.09127700574641358,
-      "delta_svr": -0.5,
+      "delta_svr": -0.6666666666666666,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_diff_staged",
@@ -149,23 +149,23 @@
       "sci": -0.30087464096262084,
       "delta_svr": -0.5,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_diff_unstaged",
       "tier": "git",
       "sci": -0.25837902598801293,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_log",
       "tier": "git",
       "sci": 0.3123036824578106,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_reset",
@@ -173,7 +173,7 @@
       "sci": -0.5259252270786854,
       "delta_svr": 0.0,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_show",
@@ -181,23 +181,23 @@
       "sci": -0.3201908295874426,
       "delta_svr": 0.0,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "git_status",
       "tier": "git",
       "sci": -0.5220619893537211,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "list_allowed_directories",
       "tier": "filesystem",
       "sci": -0.5467871761644033,
-      "delta_svr": 0.0,
+      "delta_svr": -0.3333333333333333,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "list_directory",
@@ -205,31 +205,31 @@
       "sci": 0.01879129214128844,
       "delta_svr": -0.5,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "list_directory_with_sizes",
       "tier": "filesystem",
       "sci": 0.24577349711983526,
-      "delta_svr": 0.5,
+      "delta_svr": 0.33333333333333337,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "list_tables",
       "tier": "sqlite",
       "sci": -0.9195896166234635,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "move_file",
       "tier": "filesystem",
       "sci": 0.2496367348447996,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "open_nodes",
@@ -237,15 +237,15 @@
       "sci": -0.2201664844137376,
       "delta_svr": 0.0,
       "n_baseline": 4,
-      "n_quant": 4
+      "n_quant": 6
     },
     {
       "tool": "read_graph",
       "tier": "memory",
       "sci": -0.9659484693230357,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "read_media_file",
@@ -253,47 +253,47 @@
       "sci": -0.3578743860427361,
       "delta_svr": -0.5,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "read_multiple_files",
       "tier": "filesystem",
       "sci": 0.29557575186900364,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "read_query",
       "tier": "sqlite",
       "sci": -0.44866047257939834,
-      "delta_svr": -0.16666666666666666,
+      "delta_svr": -0.2222222222222222,
       "n_baseline": 6,
-      "n_quant": 6
+      "n_quant": 9
     },
     {
       "tool": "read_text_file",
       "tier": "filesystem",
       "sci": 0.7045499655962432,
-      "delta_svr": -0.5,
+      "delta_svr": -0.6666666666666666,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "search_files",
       "tier": "filesystem",
       "sci": 0.888616719924814,
-      "delta_svr": 0.0,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "search_nodes",
       "tier": "memory",
       "sci": -0.4699082800667023,
-      "delta_svr": -0.5,
+      "delta_svr": -0.16666666666666663,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "write_file",
@@ -301,15 +301,15 @@
       "sci": 0.06226970518402844,
       "delta_svr": -0.5,
       "n_baseline": 2,
-      "n_quant": 2
+      "n_quant": 3
     },
     {
       "tool": "write_query",
       "tier": "sqlite",
       "sci": -0.4312759028170588,
-      "delta_svr": -0.375,
+      "delta_svr": -0.08333333333333337,
       "n_baseline": 8,
-      "n_quant": 8
+      "n_quant": 12
     }
   ]
 }

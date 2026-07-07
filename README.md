@@ -55,10 +55,12 @@ here.
 - **With the bug fixed and the sample size increased from 4 tier-level
   points to 38 tool-level points, H2 is a genuinely better-powered null,
   not just a bigger version of the same one.** Per-tool SCI-vs-Δ
-  regression: slope=+0.140, 95% CI=[-0.007, +0.315] (n=38). The *sign*
-  actually flipped from the tier-level view (which ran opposite to H2) to
-  positive — the direction H2 predicts — but the interval still spans
-  zero, so this isn't statistically significant. Full writeup and the
+  regression: slope=+0.045, 95% CI=[-0.064, +0.170] (n=38, computed after
+  Qwen3-1.7B was added — see below; +0.140 before it was added, sign
+  unchanged either way). The *sign* actually flipped from the tier-level
+  view (which ran opposite to H2) to positive — the direction H2 predicts
+  — but the interval spans zero, so this isn't statistically significant.
+  Full writeup and the
   reproducible `quantmcp sci-regression` command in
   [`docs/RUN_REAL.md`](docs/RUN_REAL.md).
 - **SVR-MCP (schema-valid call) and TSR (actually correct outcome) diverge**
