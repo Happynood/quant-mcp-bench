@@ -381,6 +381,92 @@ argument-content difficulty" one, not a contradiction of it.
 
 Raw results + manifests: `results/{qwen3-0.6b,llama3.2-1b}-u4/*.result.json`.
 
+## Constrained decoding (GBNF, Phase 6 stretch)
+
+Spec §10 makes this conditional: "constrained decoding on MCP schemas if
+H3's family effect motivates it." It does — every tier measured so far
+shows the same qualitative pattern (Qwen3-0.6B stable, Llama-3.2-1B
+degraded/unreliable in free decoding), and QuantCall's own GBNF writeup
+(`quant-toolcall-bench/docs/constrained_decoding_findings.md`) explicitly
+flagged that its "no measurable benefit" finding was Qwen3-specific and
+"may differ for models that are less reliable at free-form JSON generation
+than Qwen3 turned out to be" — Llama-3.2-1B here is exactly that case, and
+QuantCall never tested it. `decoding/gbnf.py`'s `build_tool_call_grammar`
+was vendored back in Phase 1 but never exercised until now — this is the
+first time it has been run against real MCP tool schemas at all (fixed:
+zero test coverage before this pass; see `tests/test_gbnf.py`).
+
+**Setup:** Llama-3.2-1B, U1 filesystem tier (14 tools, the same config
+already measured in free decoding above), all 4 quants, `decoding:
+constrained` in `configs/llama3.2-1b-u1-constrained-sweep/*.yaml`.
+
+**Grammar generation works correctly against real MCP schemas** —
+verified by loading the actual filesystem-tier tools live and building a
+grammar from them (`tests/test_gbnf.py`'s new real-schema tests), then
+confirming llama.cpp's own GBNF parser accepts it without crashing
+(regression-tests the exact `_schema_rule_name` mixed-`_`/`-` segfault
+QuantCall found and fixed, this time against a real array-of-objects MCP
+schema, not just a synthetic one).
+
+**The result: identical SVR-MCP/TSR to free decoding, substantially
+slower.**
+
+| Quant | SVR-MCP free → constrained | TSR free → constrained | Latency (total, 12 tasks) free → constrained |
+|---|---|---|---|
+| fp16 | 0.000 → 0.000 | 0.000 → 0.000 | 49.7s → 85.1s (+71%) |
+| Q8_0 | 0.000 → 0.000 | 0.000 → 0.000 | 32.6s → 69.0s (+112%) |
+| Q5_K_M | 0.250 → 0.250 | 0.250 → 0.250 | 29.9s → 55.9s (+87%) |
+| Q4_K_M | 0.250 → 0.250 | 0.250 → 0.250 | 29.1s → 55.5s (+91%) |
+
+Every SVR-MCP/TSR value is *exactly* identical, not just within noise —
+this is a stronger version of QuantCall's own "no measurable benefit"
+conclusion for Qwen3, now shown for a genuinely unreliable-in-free-decoding
+model too, and latency cost (71-112% slower) is in the same range as
+QuantCall's measured 55-89% for their smaller model.
+
+**Why the grammar didn't help — investigated directly, not assumed.**
+`build_tool_call_grammar`'s root rule is `tool-call-path | no-call`, where
+`no-call ::= .*` (unconstrained free text) — a deliberate design so a
+model can correctly abstain instead of being forced into a spurious call
+(this exact design fixed a real Abstention-collapse bug in QuantCall's own
+history, see their findings doc's "What was wrong before" section). But
+`.*` matches *anything*, including a malformed near-JSON attempt: if the
+model's own token probabilities don't favor starting with the literal
+`<tool_call>` tag, the constrained sampler can legally continue down the
+unconstrained `no-call` branch instead — which is exactly what happened
+here. A raw-output check under constrained decoding showed the *same*
+schema-echoing text already documented for free decoding
+(`{"type": "function", "function": {"name": "read_file", "parameters": {"$schema": ...`),
+produced entirely inside the grammar's own escape hatch, not despite it.
+
+To confirm this diagnosis rather than assume it, the escape hatch was
+removed for one manual test (`build_tool_call_grammar(tools,
+allow_no_call=False)`, forcing `root ::= tool-call-path` unconditionally).
+Result: the model got stuck emitting whitespace immediately after
+`<tool_call>` — `'<tool_call> \n                    ...'` padded out to
+`max_tokens` — never producing the literal `{` needed to proceed into the
+grammar's object body. This means the model's own weights don't have
+strong probability mass on continuing correctly even when structurally
+forced into the right envelope; constrained decoding can restrict *which*
+tokens are legal, but it cannot manufacture a correct continuation the
+model doesn't have any real preference for. This is a materially different
+mechanism from QuantCall's Qwen3 result (already reliable, nothing to
+recover) and is, as far as this project is aware, a novel, concrete
+illustration of *why* grammar constraints don't help a genuinely unreliable
+small model on tool-shaped generation: forcing conformance surfaces
+decoding degeneracy instead of hidden correct output.
+
+**Honest conclusion, matching QuantCall's own framing:** constrained
+decoding gave zero measured benefit and substantial latency cost for
+Llama-3.2-1B on this tier — not because the model was already reliable
+(QuantCall's reason for Qwen3), but because its underlying weights don't
+reliably know how to complete a tool call at all, with or without a
+grammar forcing the envelope. Single-tier, single-repeat scope (not the
+full 4-tier, 3-repeat treatment given to free decoding) — a real Phase 6
+stretch result, not a fully resourced study.
+
+Raw results + manifests: `results/llama3.2-1b-u1-constrained/*.result.json`.
+
 ## Repeat-run stability: 3 independent runs per config
 
 Every table above shows a *single* run per (model, quant, tier). Given the

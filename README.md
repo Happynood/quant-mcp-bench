@@ -49,6 +49,13 @@ here.
 - **SVR-MCP (schema-valid call) and TSR (actually correct outcome) diverge**
   — passing schema validation never implies task success, and the gap is
   largest on the sqlite tier.
+- **Constrained decoding (GBNF) doesn't rescue Llama-3.2-1B, and is
+  71-112% slower.** Extends QuantCall's own Qwen3-only negative result to
+  a genuinely unreliable model, with a different, directly-verified cause:
+  forcing the grammar's tool-call envelope (removing its abstention escape
+  hatch) makes the model get stuck emitting whitespace rather than
+  producing a correct call — constraining *which* tokens are legal can't
+  manufacture a continuation the model has no real probability mass on.
 
 ## Quickstart
 

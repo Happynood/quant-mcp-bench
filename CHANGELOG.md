@@ -31,7 +31,10 @@
   server via `npx`, 10 tasks covering all 9 real tools, a new `file_lacks`
   checker for verifying delete-style tools against the server's real
   post-execution state); real GPU sweep for both model families; SCI/CBC
-  recomputed across all 4 tiers.
+  recomputed across all 4 tiers; first real exercise of the vendored GBNF
+  constrained-decoding module against real MCP schemas (previously
+  untested), with a real comparative sweep for Llama-3.2-1B on U1 and a
+  root-caused explanation for why it gave no benefit.
 - Phase 4: `dump-schemas` CLI command (frozen live tool schemas per tier)
   and `cross-bench --output` (machine-readable CBC result); published the
   `quantmcp-suite` and `quantmcp-results` HF datasets and a Gradio Space
