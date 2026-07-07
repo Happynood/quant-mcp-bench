@@ -706,3 +706,20 @@ viewing).
   the per-instance sandbox root's `memory.json`. Still present and current,
   matching spec §5's table exactly (description: "official reference
   `memory` (knowledge-graph) server").
+
+## MCP SDK v2 migration (Phase 6, stretch) — deliberately not attempted
+
+Spec §10's third Phase 6 item is "MCP v2/stateless-protocol migration once
+that SDK line is stable." Checked as of 2026-07-07: the pinned SDK
+(`mcp>=1.27,<2`) is at `1.28.1`. The 2026-07-28 MCP spec revision (which
+ships as SDK v2 and reworks the protocol from stateful to stateless) is
+still three weeks out from this date and, per this project's own pinning
+policy, is unstable mid-transition. This item is explicitly skipped for
+that reason, not silently dropped — building against a pre-release
+protocol revision would risk every real result in this project on an API
+surface that could still change before it stabilizes. Revisit once v2 has
+had a real stable release; at that point the migration would need to
+re-verify every reference server tier (`servers/{filesystem,git,memory}.py`
+launch via stdio against the v1 protocol today) and `servers/base.py`'s
+`MCPServerHandle` (built on `mcp.client.stdio`/`ClientSession`, both
+stateful-protocol APIs).
