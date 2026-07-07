@@ -59,9 +59,11 @@ uv run quantmcp run --config configs/qwen3-0.6b-u1-sweep/Q4_K_M.yaml
 ```
 
 Build the leaderboard + per-server breakdown from any directory of real
-results:
+results. `uv sync --extra space` first also produces a Pareto/η chart
+(`leaderboard/pareto.html`, plotting reliability against peak VRAM):
 
 ```bash
+uv sync --extra space
 uv run quantmcp leaderboard results/ --output-dir leaderboard
 ```
 

@@ -507,6 +507,19 @@ leaderboard; the vendored, BFCL-shaped `report/leaderboard.py` is left
 as-is per the reuse rule rather than retrofitted, since its svr/tsa/ac/fcr
 columns have no server-tier concept to extend cleanly.
 
+If `plotly` is installed (`uv sync --extra space` — the same optional
+dependency the HF Space uses), the same command also writes
+`leaderboard/pareto.html`: a self-contained scatter of reliability
+(`0.5*SVR-MCP + 0.5*TSR`) against peak VRAM, with the Pareto-optimal
+(model, quant, tier) configs marked with a star. Frontier membership
+reuses the vendored `report/pareto.py` selector rather than a bespoke
+implementation. Without `plotly` installed, `quantmcp leaderboard` still
+runs and simply skips the chart (printed to stdout) — this keeps the
+offline `make verify` gate free of a hard plotly dependency. `leaderboard/`
+itself is gitignored (regenerate it from `results/` rather than committing
+it — the chart alone is several MB, embedding plotly.js for offline
+viewing).
+
 ## Reference server versions used
 
 - `@modelcontextprotocol/server-filesystem` — version `0.6.3` per its

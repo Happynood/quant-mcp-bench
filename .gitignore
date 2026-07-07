@@ -38,6 +38,9 @@ results/
 *.result.json
 *.manifest.json
 
+# Regenerated report output (rebuild via `quantmcp leaderboard results/`)
+leaderboard/
+
 # OS
 .DS_Store
 Thumbs.db

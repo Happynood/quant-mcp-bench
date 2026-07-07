@@ -267,6 +267,10 @@ def leaderboard_cmd(results_dir: str, output_dir: str) -> None:
             f"  {t['tier']:<12} mean_svr_mcp={t['mean_svr_mcp']:.3f}  "
             f"mean_tsr={t['mean_tsr']:.3f}  sci={t['sci']}"
         )
+    if leaderboard.get("pareto_chart_written"):
+        click.echo(f"Pareto/η chart written to {output_dir}/pareto.html")
+    else:
+        click.echo("Pareto/η chart skipped (install the 'space' extra for plotly to generate it)")
     click.echo(f"Written to {output_dir}/")
 
 

@@ -24,7 +24,9 @@
   outcomes); the `leaderboard` CLI command (per-server breakdown,
   reliability-per-VRAM η, and each tier's real Schema Complexity Index);
   a repeat-stability summary comparing independent runs of the same
-  config.
+  config; a Pareto-frontier chart (reliability vs. peak VRAM, `plotly`,
+  optional `space` extra) marking which (model, quant, tier) configs are
+  Pareto-optimal.
 
 ### Fixed
 - `hardware.py`'s GPU fingerprint collection failed silently on drivers

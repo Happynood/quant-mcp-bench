@@ -1,10 +1,11 @@
 """MCP-shaped leaderboard + per-server breakdown + reliability-per-VRAM (η,
-spec §4.6). New, not vendored — quant-toolcall-bench's report/leaderboard.py
-and report/published.py are BFCL-tier-shaped (svr/tsa/ac/fcr columns) and
-have no notion of an MCP server tier or SVR-MCP/TSR; this module reads the
-same real result.json files runner.py already writes and builds an
-MCP-native view on top, reusing metrics/deltas.py's compute_eta (vendored)
-rather than reimplementing the efficiency formula.
+spec §4.6) + Pareto frontier chart (spec §10 Phase 3). New, not vendored —
+quant-toolcall-bench's report/leaderboard.py and report/published.py are
+BFCL-tier-shaped (svr/tsa/ac/fcr columns) and have no notion of an MCP
+server tier or SVR-MCP/TSR; this module reads the same real result.json
+files runner.py already writes and builds an MCP-native view on top,
+reusing metrics/deltas.py's compute_eta and report/pareto.py's pareto_front
+(both vendored) rather than reimplementing either formula.
 """
 
 from __future__ import annotations
@@ -12,11 +13,12 @@ from __future__ import annotations
 import csv
 import json
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
 from quantmcp.metrics.deltas import compute_eta
+from quantmcp.report.pareto import pareto_front
 from quantmcp.report.tables import _md_table
 
 # SCI per tier, computed once from the live tool schemas of all three real
@@ -46,6 +48,68 @@ class LeaderboardRow:
     tsr: float
     vram_gb: float | None
     eta: float | None
+    pareto_optimal: bool = False
+
+
+def _reliability(svr_mcp: float, tsr: float) -> float:
+    w1, w2 = _ETA_WEIGHTS
+    return w1 * svr_mcp + w2 * tsr
+
+
+def _mark_pareto_optimal(rows: list[LeaderboardRow]) -> list[LeaderboardRow]:
+    """Flag which rows sit on the reliability-vs-VRAM Pareto frontier,
+    reusing the vendored pareto_front selector (lower VRAM, higher
+    reliability) instead of a bespoke frontier implementation. Rows with no
+    VRAM reading can't be placed on the frontier and are left unmarked."""
+    points = [
+        {"idx": i, "vram_gb": r.vram_gb, "reliability": _reliability(r.svr_mcp, r.tsr)}
+        for i, r in enumerate(rows)
+        if r.vram_gb is not None
+    ]
+    front_idx = {p["idx"] for p in pareto_front(points, x_key="vram_gb", y_key="reliability")}
+    return [replace(r, pareto_optimal=i in front_idx) for i, r in enumerate(rows)]
+
+
+def write_pareto_chart(rows: list[LeaderboardRow], output_path: Path) -> bool:
+    """Write a self-contained HTML scatter of reliability vs. peak VRAM,
+    highlighting the Pareto-optimal (model, quant, tier) configs. Plotly
+    lives in the optional `space` extra used by the HF Space (Phase 4), not
+    in the offline verify gate, so this degrades to a no-op when it isn't
+    installed rather than making `quantmcp leaderboard` depend on it.
+    """
+    try:
+        import plotly.graph_objects as go  # type: ignore[import-not-found]
+    except ImportError:
+        return False
+
+    plotted = [r for r in rows if r.vram_gb is not None]
+    if not plotted:
+        return False
+
+    fig = go.Figure()
+    variants = ((True, "Pareto-optimal", "star"), (False, "dominated", "circle"))
+    for on_front, label, symbol in variants:
+        subset = [r for r in plotted if r.pareto_optimal is on_front]
+        if not subset:
+            continue
+        fig.add_trace(
+            go.Scatter(
+                x=[r.vram_gb for r in subset],
+                y=[_reliability(r.svr_mcp, r.tsr) for r in subset],
+                mode="markers",
+                name=label,
+                text=[f"{r.model} / {r.quant} / {r.tier}" for r in subset],
+                marker={"size": 11, "symbol": symbol},
+            )
+        )
+    fig.update_layout(
+        title="Reliability vs. peak VRAM — Pareto frontier (spec §4.6)",
+        xaxis_title="Peak VRAM (GB)",
+        yaxis_title="Reliability (0.5·SVR-MCP + 0.5·TSR)",
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.write_html(str(output_path), include_plotlyjs=True)
+    return True
 
 
 def _load_results(results_dir: Path) -> list[dict[str, Any]]:
@@ -96,7 +160,7 @@ def build_mcp_leaderboard(
     that tier's Schema Complexity Index (H2, spec §4.3)."""
     results_dir = Path(results_dir)
     results = _load_results(results_dir)
-    rows = [_row_from_result(r) for r in results]
+    rows = _mark_pareto_optimal([_row_from_result(r) for r in results])
 
     per_tier: dict[str, list[LeaderboardRow]] = defaultdict(list)
     for row in rows:
@@ -131,7 +195,17 @@ def build_mcp_leaderboard(
         out.mkdir(parents=True, exist_ok=True)
         (out / "mcp_leaderboard.json").write_text(json.dumps(leaderboard, indent=2))
 
-        row_cols = ["model", "quant", "tier", "n", "svr_mcp", "tsr", "vram_gb", "eta"]
+        row_cols = [
+            "model",
+            "quant",
+            "tier",
+            "n",
+            "svr_mcp",
+            "tsr",
+            "vram_gb",
+            "eta",
+            "pareto_optimal",
+        ]
         with (out / "mcp_runs.csv").open("w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(row_cols)
@@ -150,5 +224,7 @@ def build_mcp_leaderboard(
         (out / "mcp_leaderboard.md").write_text(
             f"# MCP Leaderboard\n\n{row_md}\n\n# Per-server breakdown\n\n{tier_md}\n"
         )
+
+        leaderboard["pareto_chart_written"] = write_pareto_chart(rows, out / "pareto.html")
 
     return leaderboard
