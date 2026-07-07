@@ -13,9 +13,9 @@ structurally validated.
 
 ## Status
 
-Real GPU results across three MCP server tiers (`filesystem`, `git`,
-`sqlite`) and two model families (Qwen3-0.6B, Llama-3.2-1B), each at four
-quantization levels (fp16, Q8_0, Q5_K_M, Q4_K_M). Full methodology,
+Real GPU results across four MCP server tiers (`filesystem`, `git`,
+`sqlite`, `memory`) and two model families (Qwen3-0.6B, Llama-3.2-1B), each
+at four quantization levels (fp16, Q8_0, Q5_K_M, Q4_K_M). Full methodology,
 honest scope limitations, and every real number are in
 [`docs/RUN_REAL.md`](docs/RUN_REAL.md) — read that before citing anything
 here.
@@ -38,11 +38,13 @@ here.
   decline. On the sqlite tier, both models sometimes hallucinate a
   fictitious database schema or refuse tasks a real query could answer.
 - **Schema complexity (SCI) does not obviously predict degradation** in
-  the 3 tiers measured so far — if anything, the simplest-schema tier
-  (sqlite) shows the largest degradation swing. Only 3 tiers exist so far,
+  the 4 tiers measured so far — if anything, the simplest-schema tier
+  (sqlite) shows the largest degradation swing. Only 4 tiers exist so far,
   which is too few for a real correlation; this is flagged as a
   methodological question (SCI measures schema *shape*, not argument
-  *content* difficulty) worth carrying into later tiers, not a settled
+  *content* difficulty — and the depth component doesn't traverse
+  array-of-object arguments, likely underscoring the `memory` tier's
+  actual complexity) worth carrying into later tiers, not a settled
   result.
 - **SVR-MCP (schema-valid call) and TSR (actually correct outcome) diverge**
   — passing schema validation never implies task success, and the gap is

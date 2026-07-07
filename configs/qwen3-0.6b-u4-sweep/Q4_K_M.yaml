@@ -1,0 +1,16 @@
+backend: llama-cpp
+model: ~/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
+quant: Q4_K_M
+decoding: free
+chat_variant: qwen3_nothink
+server:
+  tier: memory
+sample_size: 10
+seed: 0
+temperature: 0.0
+
+llama_cpp:
+  n_ctx: 4096
+  n_gpu_layers: -1
+  max_tokens: 256
+  verbose: false

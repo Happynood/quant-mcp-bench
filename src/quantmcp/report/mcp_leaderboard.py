@@ -22,7 +22,7 @@ from quantmcp.report.pareto import pareto_front
 from quantmcp.report.published import sanitize_model_name
 from quantmcp.report.tables import _md_table
 
-# SCI per tier, computed once from the live tool schemas of all three real
+# SCI per tier, computed once from the live tool schemas of all four real
 # servers in a single z-normalized corpus (see docs/RUN_REAL.md's "Schema
 # Complexity Index vs. degradation (H2)" section for the exact command and
 # discussion). Hardcoded here rather than recomputed on every leaderboard
@@ -31,9 +31,10 @@ from quantmcp.report.tables import _md_table
 # deterministic for these fixed fixtures/schemas and are cheap to
 # regenerate by re-running that command if a fixture ever changes.
 TIER_SCI: dict[str, float] = {
-    "filesystem": 0.2063,
-    "git": 0.0267,
-    "sqlite": -0.6149,
+    "filesystem": 0.3329,
+    "git": 0.1148,
+    "memory": -0.3586,
+    "sqlite": -0.5154,
 }
 
 _ETA_WEIGHTS = (0.5, 0.5)  # w1, w2 in spec §4.6 — equal weight, no other guidance given

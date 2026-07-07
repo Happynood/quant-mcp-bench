@@ -27,6 +27,11 @@
   config; a Pareto-frontier chart (reliability vs. peak VRAM, `plotly`,
   optional `space` extra) marking which (model, quant, tier) configs are
   Pareto-optimal.
+- Phase 6 (stretch): U4 `memory` tier (official reference knowledge-graph
+  server via `npx`, 10 tasks covering all 9 real tools, a new `file_lacks`
+  checker for verifying delete-style tools against the server's real
+  post-execution state); real GPU sweep for both model families; SCI/CBC
+  recomputed across all 4 tiers.
 - Phase 4: `dump-schemas` CLI command (frozen live tool schemas per tier)
   and `cross-bench --output` (machine-readable CBC result); published the
   `quantmcp-suite` and `quantmcp-results` HF datasets and a Gradio Space

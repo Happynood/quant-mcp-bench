@@ -72,7 +72,7 @@ def test_build_mcp_leaderboard_computes_eta_and_tier_breakdown(tmp_path: Path):
     tiers = {t["tier"]: t for t in leaderboard["tier_breakdown"]}
     assert tiers["filesystem"]["mean_svr_mcp"] == pytest.approx(0.8)
     assert tiers["git"]["mean_svr_mcp"] == pytest.approx(1.0)
-    assert tiers["filesystem"]["sci"] == pytest.approx(0.2063)
+    assert tiers["filesystem"]["sci"] == pytest.approx(0.3329)
 
 
 def test_build_mcp_leaderboard_writes_output_files(tmp_path: Path):

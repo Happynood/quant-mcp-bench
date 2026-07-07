@@ -1,0 +1,53 @@
+{
+  "n": 10,
+  "svr_mcp": 0.2,
+  "tsr": 0.2,
+  "svr_mcp_ci": [
+    0.0,
+    0.5
+  ],
+  "tsr_ci": [
+    0.0,
+    0.5
+  ],
+  "svr": 0.2,
+  "total_latency_ms": 5527.698469995812,
+  "vram_gb": 1.3134765625,
+  "config": {
+    "model": "~/models/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+    "backend": "llama-cpp",
+    "quant": "Q4_K_M",
+    "decoding": "free",
+    "chat_variant": "default",
+    "server_tier": "memory",
+    "sample_size": 10,
+    "seed": 0,
+    "temperature": 0.0
+  },
+  "manifest": {
+    "timestamp": "2026-07-07T08:35:47.053338+00:00",
+    "git_commit": "69616b6568448465f7646d5521d5b58c4fc754ad",
+    "git_dirty": true,
+    "config_sha256": "8ad0b1a56a1dcd1f72385e57b49abcc7d243cc9aed60b290fec5e27f347a1a0d",
+    "fixture_sha256": "1cd727f62eabbd0e0f75d272ce4f2c844ba794c2600d2edc65f401587e4bc553",
+    "model": "~/models/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+    "backend": "llama-cpp",
+    "quant": "Q4_K_M",
+    "decoding": "free",
+    "server_tier": "memory",
+    "mcp_server_version": "0.6.3",
+    "seed": 0,
+    "python_version": "3.11.15 (main, May 10 2026, 19:28:18) [Clang 22.1.3 ]",
+    "platform_info": "Linux-7.0.0-27-generic-x86_64-with-glibc2.43",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+    "cpu_count": 12,
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "driver_version": "595.71.05",
+      "cuda_version": "13.2",
+      "vram_total_mb": 4096,
+      "torch_cuda_available": null,
+      "torch_cuda_device_name": null
+    }
+  }
+}

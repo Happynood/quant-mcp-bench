@@ -322,6 +322,65 @@ fine) but execution-wrong.
 
 Raw results + manifests: `results/{qwen3-0.6b,llama3.2-1b}-u3/*.result.json`.
 
+## U4 memory tier (Phase 6, stretch)
+
+Spec §10 lists U4 (the official reference `memory` knowledge-graph server)
+as a stretch goal specifically because it has "the most nested/union-heavy
+schemas — the best stress test of H2 (SCI)." Verified current at the npm
+registry on 2026-07-07 (`@modelcontextprotocol/server-memory`, version
+2026.7.4, still present). 10 naturalistic tasks against a small seed
+knowledge graph (4 entities, 3 relations), covering all 9 real tools
+(`create_entities`, `create_relations`, `add_observations`,
+`delete_entities`, `delete_observations`, `delete_relations`,
+`read_graph`, `search_nodes`, `open_nodes`).
+
+| Model | Quant | SVR-MCP | TSR |
+|---|---|---|---|
+| Qwen3-0.6B | fp16 | 0.800 | 0.500 |
+| Qwen3-0.6B | Q8_0 | 0.800 | 0.500 |
+| Qwen3-0.6B | Q5_K_M | 0.800 | 0.700 |
+| Qwen3-0.6B | Q4_K_M | 0.700 | 0.700 |
+| Llama-3.2-1B | fp16 | 0.200 | 0.200 |
+| Llama-3.2-1B | Q8_0 | 0.200 | 0.200 |
+| Llama-3.2-1B | Q5_K_M | 0.200 | 0.200 |
+| Llama-3.2-1B | Q4_K_M | 0.200 | 0.200 |
+
+**Single run per config, not 3 repeats** — disclosed honestly as a scope
+limit for this stretch tier rather than silently treated as equally
+precise to the repeat-averaged U1-U3 numbers above.
+
+Llama-3.2-1B is flat at 0.200 across all four quants — the lowest and
+flattest of any tier so far. Raw model output was inspected directly
+before trusting this (same cross-check discipline as every other tier).
+It is the *same* schema-echo failure mode already documented for U1
+(Phase 2), just more consistent here: e.g. asked to search the graph, fp16
+answered
+`{"type": "function", "function": {"name": "read_graph", "parameters": {"$schema": "...", "type": "object", "properties": {}}}}`
+— an OpenAI-style tool-call envelope whose `parameters` field is the
+tool's own JSON-Schema *definition*, not filled-in argument values. The
+parser correctly does not accept this as a valid call (same reasoning as
+Phase 2), and this is not a parser bug: several other U4 tasks *did* parse
+into well-formed, closely-relevant calls from the same model (e.g.
+`{"type": "function", "function": "search_nodes", "parameters": {"query": "Alice"}}`
+for a task that expected `open_nodes` — a reasonable tool substitution
+that still passed its checker). The schema-echo behavior specifically
+concentrates on tasks needing array-of-object arguments
+(`create_entities`, `create_relations`, `delete_relations`), i.e. exactly
+the tool shapes spec §10 predicted would stress-test this the hardest.
+
+This U4 data point also exposes a real limitation in the SCI metric as
+currently implemented (`schema/complexity.py::_max_depth`): depth is
+computed by recursing into a schema's `properties` dict, but JSON Schema
+nests object structure inside array-typed properties via `items`, not
+`properties` — so an array-of-objects argument (exactly memory's dominant
+shape) contributes only depth 1, the same as a flat string argument.
+Memory's schemas are the *most* deeply nested by inspection but score
+among the *lowest* SCI values below for this reason — a second, distinct
+methodological caveat alongside Phase 3's "SCI measures shape, not
+argument-content difficulty" one, not a contradiction of it.
+
+Raw results + manifests: `results/{qwen3-0.6b,llama3.2-1b}-u4/*.result.json`.
+
 ## Repeat-run stability: 3 independent runs per config
 
 Every table above shows a *single* run per (model, quant, tier). Given the
@@ -411,17 +470,24 @@ a correlation of deltas of deltas, from tasks sets of only 10-12 items —
 amplifies single-run GPU decode noise, and that the 3-repeat mean is the
 number to trust going forward, not either single-run value.
 
-Using the 3-repeat means (see "Repeat-run stability" above) as the SVR-MCP
-input:
+Using the 3-repeat means for U1-U3 (see "Repeat-run stability" above) plus
+U4's single run (see "U4 memory tier" above — disclosed as single-repeat,
+not equally precise) as the SVR-MCP input, pooled by task count:
 
-| Model | Quant | Δ SVR bfcl | Δ SVR-MCP (3-repeat mean, pooled U1+U2+U3) |
+| Model | Quant | Δ SVR bfcl | Δ SVR-MCP (pooled U1+U2+U3+U4) |
 |---|---|---|---|
-| Llama-3.2-1B | Q4_K_M | -0.047 | +0.156 |
-| Llama-3.2-1B | Q5_K_M | -0.014 | +0.062 |
-| Llama-3.2-1B | Q8_0 | -0.022 | -0.031 |
-| Qwen3-0.6B | Q4_K_M | -0.004 | +0.104 |
-| Qwen3-0.6B | Q5_K_M | +0.001 | -0.042 |
+| Llama-3.2-1B | Q4_K_M | -0.047 | +0.142 |
+| Llama-3.2-1B | Q5_K_M | -0.014 | +0.057 |
+| Llama-3.2-1B | Q8_0 | -0.022 | -0.028 |
+| Qwen3-0.6B | Q4_K_M | -0.004 | +0.085 |
+| Qwen3-0.6B | Q5_K_M | +0.001 | -0.038 |
 | Qwen3-0.6B | Q8_0 | +0.001 | 0.000 |
+
+Adding U4 shifted every pooled delta slightly (U4 contributes 10 of each
+model's ~42 pooled tasks) but **did not change the rank ordering of the 6
+pairs, so CBC is unchanged: -0.551 (n=6 pairs)** — a useful stability
+check in its own right: the headline number is not sensitive to adding one
+more single-repeat tier into an otherwise 3-repeat-averaged pool.
 
 **CBC = -0.551 (n=6 pairs).** QuantCall's BFCL-measured degradation
 pattern does not carry over cleanly to real MCP tool schemas for these
@@ -439,45 +505,55 @@ repeats to build a real empirical distribution over Δ, not the 3 used
 here (3 is enough to demonstrate the instability and get a noticeably
 more stable point estimate; it is not enough for a rigorous CI).
 
-### Schema Complexity Index vs. degradation (H2) — preliminary, 3 tiers only
+### Schema Complexity Index vs. degradation (H2) — preliminary, 4 tiers now
 
 H2 asks whether a tier's Schema Complexity Index (SCI, spec §4.3, computed
 from each tier's live tool schemas) predicts how much quantization
-degradation that tier shows. Real SCI was computed across all 30 tools
-from the three live tiers (filesystem, git, sqlite) in a single
-z-normalized corpus:
+degradation that tier shows. Real SCI was computed across all 39 tools
+from all four live tiers (filesystem, git, sqlite, memory) in a single
+z-normalized corpus (recomputed from scratch, not just extended, once U4
+was added — the z-normalization is corpus-relative, so adding a 4th tier
+shifts every tier's score slightly versus the original 3-tier numbers):
 
-| Tier | Tools | Mean SCI | Mean \|Δ SVR-MCP\| across quants (both models, 3-repeat means) |
+| Tier | Tools | Mean SCI | Mean \|Δ SVR-MCP\| across quants (both models) |
 |---|---|---|---|
-| filesystem (U1) | 14 | +0.206 | 0.093 |
-| git (U2) | 12 | +0.027 | 0.044 |
-| sqlite (U3) | 4 | -0.615 | 0.100 |
+| filesystem (U1) | 14 | +0.333 | 0.093 (3-repeat mean) |
+| git (U2) | 12 | +0.115 | 0.044 (3-repeat mean) |
+| memory (U4) | 9 | -0.359 | 0.017 (single run) |
+| sqlite (U3) | 4 | -0.515 | 0.100 (3-repeat mean) |
 
-At face value this runs **opposite** to H2's hypothesis: sqlite has the
-*lowest* schema complexity (its tools take one or two flat string
-arguments each, no nesting, no unions) but the *largest* degradation
-swing, while git has the *lowest* degradation swing despite middling
-schema complexity, and filesystem (the *highest*-SCI tier) falls in
-between. **This is not treated as evidence against H2** — with only
-3 tiers, a correlation coefficient over 3 points is not meaningful in
-either direction, and is not reported as a rho for that reason (spec §4.3
-calls for a regression once "enough tool schemas across tiers" exist; 3 is
-not enough).
+At face value this still runs **opposite** to H2's hypothesis, now with a
+4th point that doesn't resolve it either way: memory has the *second-lowest*
+SCI yet the *smallest* degradation swing of all four tiers, while sqlite
+(lowest SCI) has the largest. **This is not treated as evidence against
+H2** — 4 tiers is still nowhere near enough for a correlation coefficient
+to mean anything (spec §4.3 calls for a regression once "enough tool
+schemas across tiers" exist; 4 is not enough), and U4's number is a single
+run, not a 3-repeat mean like the other three.
 
-What is worth stating plainly, though, is a real methodological
-observation surfaced by this attempt: SCI as defined (spec §4.3) measures
-*schema shape* complexity (nesting depth, property count, unions,
-description length) — it does not, and by construction cannot, measure the
-difficulty of composing a correct *argument value* for a schema-simple
-field. sqlite's `query: string` parameter is trivially simple by every SCI
-component, yet writing a correct SQL query for a natural-language question
-is exactly where both models struggled (hallucinated table/column names,
-outright refusals). If a future tier's degradation really is driven by
-argument-content difficulty rather than schema shape, SCI alone won't
-capture it — worth flagging before Phase 6's U4 `memory` tier (spec's
-designated "best stress test of H2") is added, since a 4th tier still
-won't fully resolve this with only 4 points, but the qualitative caveat
-should be carried forward regardless of sample size.
+Two distinct methodological caveats now stand alongside each other:
+
+1. **(Phase 3) SCI measures schema shape, not argument-content
+   difficulty.** sqlite's `query: string` parameter is trivially simple by
+   every SCI component, yet composing a correct SQL query for a natural-
+   language question is exactly where both models struggled. This still
+   explains sqlite's outsized degradation despite its low SCI.
+2. **(Phase 6, new) `_max_depth`'s nesting metric doesn't traverse array
+   items.** Memory's dominant tool shape is an *array of objects*
+   (`entities: [{name, entityType, observations}, ...]`) — genuinely
+   deeply nested by inspection, but `schema/complexity.py::_max_depth`
+   only recurses into a schema's `properties` dict, and JSON Schema nests
+   object structure inside array-typed properties via `items`, not
+   `properties`. An array-of-objects argument therefore scores depth 1,
+   identical to a flat string argument. This likely explains why memory's
+   SCI came out low despite being the tier spec §5 specifically flagged as
+   having "the most nested/union-heavy schemas." Not fixed in this pass —
+   changing the depth formula mid-project would silently invalidate the
+   already-published 3-tier SCI numbers without re-deriving them, and the
+   spec's SCI formula (§4.3) doesn't specify array-traversal semantics —
+   but disclosed here because it materially affects how memory's low SCI
+   number should be read: as an artifact of the metric's array blind spot,
+   not as evidence the tier is actually schema-simple.
 
 ### The SVR-vs-TSR gap (H4)
 
@@ -491,7 +567,9 @@ expected execution gap: passing schema validation is necessary but not
 sufficient for a tool call to actually do what was asked, and that gap is
 not uniform across quants, model families, or tiers, so a leaderboard
 built on SVR-MCP alone would overstate real-world reliability — the sqlite
-tier makes this most visible of the three.
+tier makes this most visible of the four (U4 memory shows the same
+direction but a smaller gap, e.g. Qwen3-0.6B fp16 there: SVR-MCP=0.800,
+TSR=0.500).
 
 ## Leaderboard and reliability-per-VRAM (η, spec §4.6)
 
@@ -536,3 +614,9 @@ viewing).
   the same day) — Phase 3's U3 tier will need the documented fallback (a
   minimal self-written FastMCP wrapper), per the scope note this project's
   spec already anticipated.
+- `@modelcontextprotocol/server-memory` — version `2026.7.4` per the npm
+  registry, checked 2026-07-07; launched via `npx -y
+  @modelcontextprotocol/server-memory` with `MEMORY_FILE_PATH` pointing at
+  the per-instance sandbox root's `memory.json`. Still present and current,
+  matching spec §5's table exactly (description: "official reference
+  `memory` (knowledge-graph) server").
