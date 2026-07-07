@@ -16,57 +16,70 @@
 # Instructions are phrased naturalistically and never name the tool to
 # call, for the same reason as the U1 filesystem tasks: tool selection is
 # part of the difficulty this benchmark measures.
+#
+# `tool:` on each task (Phase 7) declares which tool that task is designed to
+# exercise, for the per-tool SCI-vs-Δ regression (H2) -- analysis metadata
+# only, never surfaced to the model.
 tasks:
   - id: u2-status
     instruction: "What's the current status of the working tree in the git repository at {root}?"
+    tool: git_status
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Untracked files"}
 
   - id: u2-log
     instruction: "Show the commit history of the git repository at {root}."
+    tool: git_log
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Add project notes"}
 
   - id: u2-diff-unstaged
     instruction: "What unstaged changes exist in the working directory at {root}?"
+    tool: git_diff_unstaged
     checker:
       name: call_result_contains
       args: {index: 0, contains: "CHANGELOG_PENDING"}
 
   - id: u2-diff-staged
     instruction: "What changes are currently staged for commit in the git repository at {root}?"
+    tool: git_diff_staged
     checker:
       name: call_result_contains
       args: {index: 0, contains: "STAGED_FEATURE_FLAG"}
 
   - id: u2-branch-list
     instruction: "What branches exist in the git repository at {root}?"
+    tool: git_branch
     checker:
       name: call_result_contains
       args: {index: 0, contains: "feature-x"}
 
   - id: u2-show-head
     instruction: "Show the contents of the most recent commit (HEAD) in the git repository at {root}."
+    tool: git_show
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Add helper function"}
 
   - id: u2-add-draft
     instruction: "Stage the file draft.txt for commit in the git repository at {root}."
+    tool: git_add
     checker:
       name: call_result_contains
       args: {index: 0, contains: "staged successfully"}
 
   - id: u2-reset
     instruction: "Unstage all currently staged changes in the git repository at {root}."
+    tool: git_reset
     checker:
       name: call_result_contains
       args: {index: 0, contains: "reset"}
 
   - id: u2-create-branch
     instruction: "Create a new branch called release-1 in the git repository at {root}."
+    tool: git_create_branch
     checker:
       name: call_result_contains
       args: {index: 0, contains: "release-1"}
@@ -75,6 +88,30 @@ tasks:
     instruction: >-
       Commit the currently staged changes in the git repository at {root}
       with the message 'Apply pending updates'.
+    tool: git_commit
     checker:
       name: call_result_contains
       args: {index: 0, contains: "committed successfully"}
+
+  # Added Phase 7 (H2 statistical power): git_diff and git_checkout were
+  # the only git tools with zero task coverage. git_diff against the
+  # feature-x branch is read-only (no fixture-state risk). git_checkout
+  # targets "main" -- the branch the fixture is already on -- which git
+  # allows unconditionally even with the fixture's uncommitted staged/
+  # unstaged edits present (no actual file switch happens), unlike
+  # checking out to a *different* branch (this file's original header note
+  # on why checkout was skipped still holds for any other target). Both
+  # verified against the real server before being written.
+  - id: u2-diff-feature-x
+    instruction: "What's different between the feature-x branch and the current working tree at {root}?"
+    tool: git_diff
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "CHANGELOG_PENDING"}
+
+  - id: u2-checkout-main
+    instruction: "Switch the git repository at {root} to the main branch."
+    tool: git_checkout
+    checker:
+      name: call_result_contains
+      args: {index: 0, contains: "Switched to branch"}

@@ -68,6 +68,20 @@ def call_result_contains(state: SandboxState, index: int, contains: str) -> bool
     return False
 
 
+def call_result_mime_type_equals(state: SandboxState, index: int, mime_type: str) -> bool:
+    """Pass if the `index`-th executed call succeeded and its content block's
+    `mimeType` equals `mime_type` -- for tools returning non-text content
+    (e.g. `read_media_file`'s base64 image/audio data), whose success can't
+    be checked via `call_result_contains`' text-content assumption."""
+    if index >= len(state.results):
+        return False
+    result = state.results[index]
+    if not result.ok:
+        return False
+    content = getattr(result.raw_result, "content", None) or []
+    return any(getattr(item, "mimeType", None) == mime_type for item in content)
+
+
 def dir_exists(state: SandboxState, dirname: str) -> bool:
     """Pass if `dirname` exists as a directory under the sandbox root."""
     path = state.root / dirname
@@ -102,6 +116,7 @@ CHECKERS: dict[str, Any] = {
     "file_lacks": file_lacks,
     "call_result_number_equals": call_result_number_equals,
     "call_result_contains": call_result_contains,
+    "call_result_mime_type_equals": call_result_mime_type_equals,
     "dir_exists": dir_exists,
     "sqlite_query_scalar": sqlite_query_scalar,
 }

@@ -4,7 +4,7 @@ quant: Q4_K_M
 decoding: free
 server:
   tier: git
-sample_size: 10
+sample_size: 12
 seed: 0
 temperature: 0.0
 

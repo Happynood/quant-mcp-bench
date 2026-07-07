@@ -13,63 +13,83 @@
 # BFCL's naturalistic-query convention, so SVR-MCP and BFCL's SVR measure the
 # same axis (parse + tool selection + argument construction under
 # quantization) rather than argument construction alone.
+#
+# `tool:` on each task (Phase 7) declares which tool that task is designed to
+# exercise, for the per-tool SCI-vs-Δ regression (H2) -- it is metadata for
+# analysis only, never surfaced to the model. `read_file` is deliberately not
+# covered by any task: it is explicitly marked DEPRECATED in its own live
+# schema description ("use read_text_file instead") and has an identical
+# schema to read_text_file, so no naturalistic instruction can fairly force
+# a model to prefer the deprecated tool over its exact functional
+# replacement -- doing so would violate this file's own naturalistic-
+# instruction rule above.
 tasks:
   - id: u1-read-todo
     instruction: "There's a to-do list at {root}/notes/todo.txt. What does it say?"
+    tool: read_text_file
     checker:
       name: call_result_contains
       args: {index: 0, contains: "buy milk"}
 
   - id: u1-write-hello
     instruction: "Create a new file at {root}/hello.txt containing exactly the text: hello world"
+    tool: write_file
     checker:
       name: file_contains
       args: {filename: hello.txt, contains: "hello world"}
 
   - id: u1-create-dir
     instruction: "Create a new directory at {root}/new_folder."
+    tool: create_directory
     checker:
       name: dir_exists
       args: {dirname: new_folder}
 
   - id: u1-list-notes
     instruction: "What files are in the directory {root}/notes?"
+    tool: list_directory
     checker:
       name: call_result_contains
       args: {index: 0, contains: "todo.txt"}
 
   - id: u1-list-sizes-data
     instruction: "List the files in {root}/data along with their sizes."
+    tool: list_directory_with_sizes
     checker:
       name: call_result_contains
       args: {index: 0, contains: "numbers.csv"}
 
   - id: u1-search-md
     instruction: "Find all Markdown files under {root}."
+    tool: search_files
     checker:
       name: call_result_contains
       args: {index: 0, contains: "draft.md"}
 
   - id: u1-directory-tree
     instruction: "Give me a complete recursive listing of everything under {root}."
+    tool: directory_tree
     checker:
       name: call_result_contains
       args: {index: 0, contains: "numbers.csv"}
 
   - id: u1-get-file-info
     instruction: "What metadata (size, type, timestamps) does the file {root}/config.json have?"
+    tool: get_file_info
     checker:
       name: call_result_contains
       args: {index: 0, contains: "isFile: true"}
 
   - id: u1-move-file
     instruction: "Rename {root}/notes/draft.md to {root}/notes/draft_renamed.md."
+    tool: move_file
     checker:
       name: file_contains
       args: {filename: "notes/draft_renamed.md", contains: "This is a draft document."}
 
   - id: u1-list-allowed-dirs
     instruction: "Which directories are you allowed to access?"
+    tool: list_allowed_directories
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Allowed directories:"}
@@ -78,12 +98,27 @@ tasks:
     instruction: >-
       In the file {root}/notes/todo.txt, replace the text 'buy milk' with
       'buy oat milk'.
+    tool: edit_file
     checker:
       name: file_contains
       args: {filename: "notes/todo.txt", contains: "buy oat milk"}
 
   - id: u1-read-multiple
     instruction: "Read both {root}/notes/todo.txt and {root}/notes/draft.md."
+    tool: read_multiple_files
     checker:
       name: call_result_contains
       args: {index: 0, contains: "buy milk"}
+
+  # Added Phase 7 (H2 statistical power): read_media_file was the only
+  # filesystem tool with zero task coverage besides the deprecated
+  # read_file (see this file's own header note on why read_file is
+  # deliberately skipped). pixel.png is a minimal real 1x1 PNG fixture,
+  # verified against the real server before this task was written (returns
+  # isError=False, content type "image", mimeType "image/png").
+  - id: u1-read-image
+    instruction: "What image is stored at {root}/pixel.png? Read it."
+    tool: read_media_file
+    checker:
+      name: call_result_mime_type_equals
+      args: {index: 0, mime_type: "image/png"}

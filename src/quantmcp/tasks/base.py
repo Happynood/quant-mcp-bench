@@ -30,3 +30,9 @@ class MCPTaskInstance:
     checker: CheckerFn
     expects_call: bool = True
     fixture_subdir: str | None = None
+    # The one tool this task is designed to exercise (declared, not inferred,
+    # since a task's instruction deliberately never names it) -- lets a
+    # per-instance result be attributed to a specific tool's SCI for the
+    # H2 regression (spec §4.3), without needing to guess from the model's
+    # actual (possibly wrong) parsed call.
+    tool: str | None = None

@@ -42,7 +42,7 @@ async def test_filesystem_server_lists_expected_tools():
 
 def test_load_u1_filesystem_tasks():
     tasks = load_tasks(TASKS_FILE)
-    assert len(tasks) == 12
+    assert len(tasks) == 13
 
 
 @pytest.mark.asyncio
@@ -125,6 +125,7 @@ async def test_all_u1_tasks_pass_with_the_intended_call():
             "read_multiple_files",
             lambda r: {"paths": [f"{r}/notes/todo.txt", f"{r}/notes/draft.md"]},
         ),
+        "u1-read-image": ("read_media_file", lambda r: {"path": f"{r}/pixel.png"}),
     }
     tasks = {t.id: t for t in load_tasks(TASKS_FILE)}
     assert set(tasks) == set(tool_by_task)

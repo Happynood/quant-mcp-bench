@@ -26,6 +26,7 @@ def load_tasks(path: str | Path) -> list[MCPTaskInstance]:
                 checker=bound_checker,
                 expects_call=entry.get("expects_call", True),
                 fixture_subdir=entry.get("fixture_subdir"),
+                tool=entry.get("tool"),
             )
         )
     return tasks

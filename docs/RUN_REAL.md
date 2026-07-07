@@ -664,6 +664,63 @@ arguably the more important one for explaining sqlite specifically:
 See "Statistical power for H2 (Phase 7)" below for the sample-size fix
 (more than 4 aggregate tier-level points) attempted alongside this bug fix.
 
+### Statistical power for H2 (Phase 7) — per-tool regression, n=38
+
+The 4-tier aggregate above was never going to be enough for a regression
+coefficient to mean anything, and adding a 5th or 6th tier wasn't going to
+fix that quickly. Instead of more tiers, this pass moved to per-*tool*
+granularity: every task fixture now declares which tool it exercises
+(`tool:` in the YAML, `tasks/base.py`), `result.json` now records each
+task instance's outcome tagged with that tool
+(`runner.py::RunResult.to_dict()`'s new `"instances"` field), and
+`report/sci_regression.py::compute_sci_delta_regression` pairs each
+tool's own live SCI with its own Δ SVR-MCP (pass rate at fp16 minus pass
+rate at Q4_K_M, pooled across both model families weighted by n) —
+turning a 4-point tier-level analysis into a 38-point tool-level one.
+
+Two tools were added task coverage for specifically because they had none
+before (`read_media_file` on filesystem, using a new 1x1 PNG fixture; and
+`git_diff`/`git_checkout` on git, verified safe against the fixture's
+uncommitted-changes state — see this project's git task fixture header for
+why `git_checkout` targets `main`, the branch already checked out, rather
+than a different one). `read_file` is the only live tool in the corpus
+still without task coverage, deliberately: it is marked DEPRECATED in its
+own schema description in favor of the schema-identical `read_text_file`,
+so no naturalistic instruction can fairly force a model to prefer it.
+38 of 39 tools have at least one task; sample size achieved: **n=38**
+(filesystem 13, git 12, sqlite 4, memory 9).
+
+```
+quantmcp sci-regression results/*/*.result.json --schemas docs/live_schemas_phase7.json --output docs/sci_regression_phase7.json
+```
+
+Both the live schema dump and the regression's full 38-point output are
+committed under `docs/` for reproducibility instead of only reprinted here.
+
+**Result: slope = +0.140, 95% bootstrap CI = [-0.007, +0.315] (n=38).**
+
+This is a genuinely different picture from the tier-level aggregate above.
+The tier-level view said the relationship ran *opposite* to H2 (lowest-SCI
+tier had the largest degradation). The tool-level view says the opposite
+of that: the slope is **positive** — higher-SCI tools tend to degrade
+*more*, which is the direction H2 actually predicts — but the confidence
+interval still spans zero (barely: the lower bound is -0.007, a hair below
+zero), so this is not a statistically significant relationship at n=38.
+**Neither the tier-level nor the tool-level analysis lets H2 be called
+resolved.** What changed is *why* it isn't resolved: not "too few points to
+say anything" (the original problem, now fixed — 38 is a real sample), but
+"a real, larger sample shows a relationship in the predicted direction that
+individual tool-level noise doesn't let it clear significance." That is a
+meaningfully stronger (if still negative) result than the original
+4-point analysis could ever produce, and the two caveats already on record
+(SCI measures shape not argument-content difficulty; single-run Δ per tool
+is noisier than a multi-repeat tier aggregate, since most tools here have
+only 2-4 task instances total per quant level, not the 30-120 pooled
+instances a tier-level number gets) still apply and likely explain most of
+the remaining noise. The full 38-point table (tool, tier, SCI, Δ) is
+reproducible via the command above; not reprinted in full here since it's
+already machine-readable output, not a hand-curated table.
+
 ### The SVR-vs-TSR gap (H4)
 
 Across every (model, quant, tier) combination measured so far, TSR is never

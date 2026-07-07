@@ -11,7 +11,7 @@
     0.3
   ],
   "svr": 0.1,
-  "total_latency_ms": 15453.650290995938,
+  "total_latency_ms": 24851.133265005046,
   "vram_gb": 1.3759765625,
   "config": {
     "model": "~/models/Llama-3.2-1B-Instruct-Q5_K_M.gguf",
@@ -25,10 +25,10 @@
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-06T23:15:21.642068+00:00",
-    "git_commit": "f7ff1edf2edd71d7efd65bce0c0104ed46794550",
+    "timestamp": "2026-07-07T11:27:00.500721+00:00",
+    "git_commit": "2d1a52a42404068d6552f62ad80c4f1d46c58b43",
     "git_dirty": true,
-    "config_sha256": "b33b5011d95a8ca26f99b5979c96702ac828350b1af252449daa5db7de5181ea",
+    "config_sha256": "f01be1ccbd5b3fecfe620243b8fa05d927f3f3c221e345752357302c1d04ba2f",
     "fixture_sha256": "1f4db6fb92e1facce1208ad3ed87b1c276c740c1eb188cfd29110f1cd934d10c",
     "model": "~/models/Llama-3.2-1B-Instruct-Q5_K_M.gguf",
     "backend": "llama-cpp",
@@ -49,5 +49,67 @@
       "torch_cuda_available": null,
       "torch_cuda_device_name": null
     }
-  }
+  },
+  "instances": [
+    {
+      "task_id": "u3-list-tables",
+      "tool": "list_tables",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u3-describe-employees",
+      "tool": "describe_table",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u3-describe-inventory",
+      "tool": "describe_table",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u3-query-engineering",
+      "tool": "read_query",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u3-query-salary",
+      "tool": "read_query",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u3-query-widget-count",
+      "tool": "read_query",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u3-update-gadget-quantity",
+      "tool": "write_query",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u3-give-raise",
+      "tool": "write_query",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u3-delete-widget",
+      "tool": "write_query",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u3-insert-employee",
+      "tool": "write_query",
+      "svr_pass": false,
+      "tsr_pass": false
+    }
+  ]
 }

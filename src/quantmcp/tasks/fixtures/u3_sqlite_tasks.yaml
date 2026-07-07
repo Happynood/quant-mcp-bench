@@ -10,45 +10,56 @@
 # tiers, whose tools take an explicit path argument).
 # Instructions are phrased naturalistically and never name the tool to
 # call, for the same reason as the U1/U2 tasks.
+# `tool:` on each task (Phase 7) declares which tool that task is designed
+# to exercise, for the per-tool SCI-vs-Δ regression (H2) -- all 4 sqlite
+# tools already had task coverage, so no new tasks were added here; only
+# the tool metadata is new.
 tasks:
   - id: u3-list-tables
     instruction: "What tables exist in this database?"
+    tool: list_tables
     checker:
       name: call_result_contains
       args: {index: 0, contains: "employees"}
 
   - id: u3-describe-employees
     instruction: "What columns does the employees table have?"
+    tool: describe_table
     checker:
       name: call_result_contains
       args: {index: 0, contains: "salary"}
 
   - id: u3-describe-inventory
     instruction: "What columns does the inventory table have?"
+    tool: describe_table
     checker:
       name: call_result_contains
       args: {index: 0, contains: "quantity"}
 
   - id: u3-query-engineering
     instruction: "Which employees work in the Engineering department?"
+    tool: read_query
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Alice Chen"}
 
   - id: u3-query-salary
     instruction: "What is Carla Diaz's salary?"
+    tool: read_query
     checker:
       name: call_result_contains
       args: {index: 0, contains: "72000"}
 
   - id: u3-query-widget-count
     instruction: "How many widgets are currently in inventory?"
+    tool: read_query
     checker:
       name: call_result_contains
       args: {index: 0, contains: "42"}
 
   - id: u3-update-gadget-quantity
     instruction: "Update the inventory so the gadget quantity becomes 100."
+    tool: write_query
     checker:
       name: sqlite_query_scalar
       args:
@@ -58,6 +69,7 @@ tasks:
 
   - id: u3-give-raise
     instruction: "Give Bob Martins a raise: set his salary to 90000."
+    tool: write_query
     checker:
       name: sqlite_query_scalar
       args:
@@ -67,6 +79,7 @@ tasks:
 
   - id: u3-delete-widget
     instruction: "Remove widget from the inventory entirely."
+    tool: write_query
     checker:
       name: sqlite_query_scalar
       args:
@@ -78,6 +91,7 @@ tasks:
     instruction: >-
       Add a new employee named Dana Kim in the Marketing department with a
       salary of 65000.
+    tool: write_query
     checker:
       name: sqlite_query_scalar
       args:

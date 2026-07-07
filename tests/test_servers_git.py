@@ -34,7 +34,7 @@ async def test_git_server_lists_expected_tools():
 
 def test_load_u2_git_tasks():
     tasks = load_tasks(TASKS_FILE)
-    assert len(tasks) == 10
+    assert len(tasks) == 12
 
 
 @pytest.mark.asyncio
@@ -58,6 +58,14 @@ async def test_all_u2_tasks_pass_with_the_intended_call():
         "u2-commit": (
             "git_commit",
             lambda r: {"repo_path": str(r), "message": "Apply pending updates"},
+        ),
+        "u2-diff-feature-x": (
+            "git_diff",
+            lambda r: {"repo_path": str(r), "target": "feature-x"},
+        ),
+        "u2-checkout-main": (
+            "git_checkout",
+            lambda r: {"repo_path": str(r), "branch_name": "main"},
         ),
     }
     tasks = {t.id: t for t in load_tasks(TASKS_FILE)}

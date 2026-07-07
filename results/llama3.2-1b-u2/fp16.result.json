@@ -1,17 +1,17 @@
 {
-  "n": 10,
-  "svr_mcp": 0.6,
-  "tsr": 0.2,
+  "n": 12,
+  "svr_mcp": 0.4166666666666667,
+  "tsr": 0.25,
   "svr_mcp_ci": [
-    0.3,
-    0.9
+    0.16666666666666666,
+    0.6666666666666666
   ],
   "tsr_ci": [
-    0.0,
+    0.08333333333333333,
     0.5
   ],
-  "svr": 0.6,
-  "total_latency_ms": 19792.67300600077,
+  "svr": 0.4166666666666667,
+  "total_latency_ms": 46529.77041000122,
   "vram_gb": 2.8798828125,
   "config": {
     "model": "~/models/Llama-3.2-1B-Instruct-f16.gguf",
@@ -20,15 +20,15 @@
     "decoding": "free",
     "chat_variant": "default",
     "server_tier": "git",
-    "sample_size": 10,
+    "sample_size": 12,
     "seed": 0,
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-06T23:13:13.877202+00:00",
-    "git_commit": "f7ff1edf2edd71d7efd65bce0c0104ed46794550",
+    "timestamp": "2026-07-07T11:21:20.143401+00:00",
+    "git_commit": "2d1a52a42404068d6552f62ad80c4f1d46c58b43",
     "git_dirty": true,
-    "config_sha256": "7158f05d4cd6dc0a50c9622b2f26e360f60a0f1c11c9975d1e0e6bb622af9dc3",
+    "config_sha256": "c67e4341799415990f38c375581aa50fe1e9ff4c42dd18054126072765b4f168",
     "fixture_sha256": "e5ea432306c9157016fbae35d648db41c0fe4faf144092022b04694bc47a9939",
     "model": "~/models/Llama-3.2-1B-Instruct-f16.gguf",
     "backend": "llama-cpp",
@@ -49,5 +49,79 @@
       "torch_cuda_available": null,
       "torch_cuda_device_name": null
     }
-  }
+  },
+  "instances": [
+    {
+      "task_id": "u2-status",
+      "tool": "git_status",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u2-log",
+      "tool": "git_log",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u2-diff-unstaged",
+      "tool": "git_diff_unstaged",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u2-diff-staged",
+      "tool": "git_diff_staged",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u2-branch-list",
+      "tool": "git_branch",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u2-show-head",
+      "tool": "git_show",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u2-add-draft",
+      "tool": "git_add",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u2-reset",
+      "tool": "git_reset",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u2-create-branch",
+      "tool": "git_create_branch",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u2-commit",
+      "tool": "git_commit",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u2-diff-feature-x",
+      "tool": "git_diff",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u2-checkout-main",
+      "tool": "git_checkout",
+      "svr_pass": false,
+      "tsr_pass": false
+    }
+  ]
 }

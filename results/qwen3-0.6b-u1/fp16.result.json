@@ -1,17 +1,17 @@
 {
-  "n": 12,
-  "svr_mcp": 0.8333333333333334,
-  "tsr": 0.75,
+  "n": 13,
+  "svr_mcp": 0.8461538461538461,
+  "tsr": 0.6923076923076923,
   "svr_mcp_ci": [
-    0.5833333333333334,
+    0.6153846153846154,
     1.0
   ],
   "tsr_ci": [
-    0.5,
-    1.0
+    0.38461538461538464,
+    0.9230769230769231
   ],
-  "svr": 0.8333333333333334,
-  "total_latency_ms": 17359.236389002035,
+  "svr": 0.8461538461538461,
+  "total_latency_ms": 18067.84042399522,
   "vram_gb": 1.9951171875,
   "config": {
     "model": "~/models/Qwen_Qwen3-0.6B-bf16.gguf",
@@ -25,11 +25,11 @@
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-06T23:06:10.279301+00:00",
-    "git_commit": "eaf6596d5cf7a33c88710c5bb3851170a10f61ca",
-    "git_dirty": false,
-    "config_sha256": "14231005bfa3e4ffe8202f90877ce4f15279eb9e6dc33c9c84d9353c4043744d",
-    "fixture_sha256": "05f4271101928c527ef92ab3da7013314c2bf97e1e687ddff2ce6dbb249e924c",
+    "timestamp": "2026-07-07T11:05:12.307423+00:00",
+    "git_commit": "2d1a52a42404068d6552f62ad80c4f1d46c58b43",
+    "git_dirty": true,
+    "config_sha256": "8463898da3cf0c41dea7dde26c92a331e63376732030cc13c99c37f40ffcab81",
+    "fixture_sha256": "2a56a71dce74fdc1052f257ac0dbba658f0e2bf2b10c788a43a15986b78142c7",
     "model": "~/models/Qwen_Qwen3-0.6B-bf16.gguf",
     "backend": "llama-cpp",
     "quant": "fp16",
@@ -49,5 +49,85 @@
       "torch_cuda_available": null,
       "torch_cuda_device_name": null
     }
-  }
+  },
+  "instances": [
+    {
+      "task_id": "u1-read-todo",
+      "tool": "read_text_file",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-write-hello",
+      "tool": "write_file",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u1-create-dir",
+      "tool": "create_directory",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u1-list-notes",
+      "tool": "list_directory",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u1-list-sizes-data",
+      "tool": "list_directory_with_sizes",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u1-search-md",
+      "tool": "search_files",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-directory-tree",
+      "tool": "directory_tree",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-get-file-info",
+      "tool": "get_file_info",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u1-move-file",
+      "tool": "move_file",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u1-list-allowed-dirs",
+      "tool": "list_allowed_directories",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-edit-file",
+      "tool": "edit_file",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u1-read-multiple",
+      "tool": "read_multiple_files",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u1-read-image",
+      "tool": "read_media_file",
+      "svr_pass": true,
+      "tsr_pass": true
+    }
+  ]
 }

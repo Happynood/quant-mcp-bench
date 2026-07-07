@@ -1,0 +1,984 @@
+[
+  {
+    "tier": "filesystem",
+    "name": "read_file",
+    "description": "Read the complete contents of a file as text. DEPRECATED: Use read_text_file instead.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "tail": {
+          "description": "If provided, returns only the last N lines of the file",
+          "type": "number"
+        },
+        "head": {
+          "description": "If provided, returns only the first N lines of the file",
+          "type": "number"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "read_text_file",
+    "description": "Read the complete contents of a file from the file system as text. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Use the 'head' parameter to read only the first N lines of a file, or the 'tail' parameter to read only the last N lines of a file. Operates on the file as text regardless of extension. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "tail": {
+          "description": "If provided, returns only the last N lines of the file",
+          "type": "number"
+        },
+        "head": {
+          "description": "If provided, returns only the first N lines of the file",
+          "type": "number"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "read_media_file",
+    "description": "Read an image or audio file. Returns the base64 encoded data and MIME type. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "read_multiple_files",
+    "description": "Read the contents of multiple files simultaneously. This is more efficient than reading files one by one when you need to analyze or compare multiple files. Each file's content is returned with its path as a reference. Failed reads for individual files won't stop the entire operation. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "paths": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of file paths to read. Each path must be a string pointing to a valid file within allowed directories."
+        }
+      },
+      "required": [
+        "paths"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "write_file",
+    "description": "Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "content"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "edit_file",
+    "description": "Make line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "edits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "oldText": {
+                "type": "string",
+                "description": "Text to search for - must match exactly"
+              },
+              "newText": {
+                "type": "string",
+                "description": "Text to replace with"
+              }
+            },
+            "required": [
+              "oldText",
+              "newText"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "description": "Preview changes using git-style diff format",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "edits"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "create_directory",
+    "description": "Create a new directory or ensure a directory exists. Can create multiple nested directories in one operation. If the directory already exists, this operation will succeed silently. Perfect for setting up directory structures for projects or ensuring required paths exist. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "list_directory",
+    "description": "Get a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "list_directory_with_sizes",
+    "description": "Get a detailed listing of all files and directories in a specified path, including sizes. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is useful for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sortBy": {
+          "default": "name",
+          "description": "Sort entries by name or size",
+          "type": "string",
+          "enum": [
+            "name",
+            "size"
+          ]
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "directory_tree",
+    "description": "Get a recursive tree view of files and directories as a JSON structure. Each entry includes 'name', 'type' (file/directory), and 'children' for directories. Files have no children array, while directories always have a children array (which may be empty). The output is formatted with 2-space indentation for readability. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "excludePatterns": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "move_file",
+    "description": "Move or rename files and directories. Can move files between directories and rename them in a single operation. If the destination exists, the operation will fail. Works across different directories and can be used for simple renaming within the same directory. Both source and destination must be within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "destination"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "search_files",
+    "description": "Recursively search for files and directories matching a pattern. The patterns should be glob-style patterns that match paths relative to the working directory. Use pattern like '*.ext' to match files in current directory, and '**/*.ext' to match files in all subdirectories. Returns full paths to all matching items. Great for finding files when you don't know their exact location. Only searches within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "excludePatterns": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "path",
+        "pattern"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "get_file_info",
+    "description": "Retrieve detailed metadata about a file or directory. Returns comprehensive information including size, creation time, last modified time, permissions, and type. This tool is perfect for understanding file characteristics without reading the actual content. Only works within allowed directories.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "tier": "filesystem",
+    "name": "list_allowed_directories",
+    "description": "Returns the list of directories that this server is allowed to access. Subdirectories within these allowed directories are also accessible. Use this to understand which directories and their nested paths are available before trying to access files.",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_status",
+    "description": "Shows the working tree status",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo_path"
+      ],
+      "title": "GitStatus",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_diff_unstaged",
+    "description": "Shows changes in the working directory that are not yet staged",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "context_lines": {
+          "default": 3,
+          "title": "Context Lines",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "repo_path"
+      ],
+      "title": "GitDiffUnstaged",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_diff_staged",
+    "description": "Shows changes that are staged for commit",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "context_lines": {
+          "default": 3,
+          "title": "Context Lines",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "repo_path"
+      ],
+      "title": "GitDiffStaged",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_diff",
+    "description": "Shows differences between branches or commits",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        },
+        "context_lines": {
+          "default": 3,
+          "title": "Context Lines",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "repo_path",
+        "target"
+      ],
+      "title": "GitDiff",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_commit",
+    "description": "Records changes to the repository",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo_path",
+        "message"
+      ],
+      "title": "GitCommit",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_add",
+    "description": "Adds file contents to the staging area",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Files",
+          "type": "array"
+        }
+      },
+      "required": [
+        "repo_path",
+        "files"
+      ],
+      "title": "GitAdd",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_reset",
+    "description": "Unstages all staged changes",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo_path"
+      ],
+      "title": "GitReset",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_log",
+    "description": "Shows the commit logs",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "max_count": {
+          "default": 10,
+          "title": "Max Count",
+          "type": "integer"
+        },
+        "start_timestamp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Start timestamp for filtering commits. Accepts: ISO 8601 format (e.g., '2024-01-15T14:30:25'), relative dates (e.g., '2 weeks ago', 'yesterday'), or absolute dates (e.g., '2024-01-15', 'Jan 15 2024')",
+          "title": "Start Timestamp"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "End timestamp for filtering commits. Accepts: ISO 8601 format (e.g., '2024-01-15T14:30:25'), relative dates (e.g., '2 weeks ago', 'yesterday'), or absolute dates (e.g., '2024-01-15', 'Jan 15 2024')",
+          "title": "End Timestamp"
+        }
+      },
+      "required": [
+        "repo_path"
+      ],
+      "title": "GitLog",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_create_branch",
+    "description": "Creates a new branch from an optional base branch",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "branch_name": {
+          "title": "Branch Name",
+          "type": "string"
+        },
+        "base_branch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Base Branch"
+        }
+      },
+      "required": [
+        "repo_path",
+        "branch_name"
+      ],
+      "title": "GitCreateBranch",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_checkout",
+    "description": "Switches branches",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "branch_name": {
+          "title": "Branch Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo_path",
+        "branch_name"
+      ],
+      "title": "GitCheckout",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_show",
+    "description": "Shows the contents of a commit",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo_path",
+        "revision"
+      ],
+      "title": "GitShow",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "git",
+    "name": "git_branch",
+    "description": "List Git branches",
+    "input_schema": {
+      "properties": {
+        "repo_path": {
+          "description": "The path to the Git repository.",
+          "title": "Repo Path",
+          "type": "string"
+        },
+        "branch_type": {
+          "description": "Whether to list local branches ('local'), remote branches ('remote') or all branches('all').",
+          "title": "Branch Type",
+          "type": "string"
+        },
+        "contains": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The commit sha that branch should contain. Do not pass anything to this param if no commit sha is specified",
+          "title": "Contains"
+        },
+        "not_contains": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The commit sha that branch should NOT contain. Do not pass anything to this param if no commit sha is specified",
+          "title": "Not Contains"
+        }
+      },
+      "required": [
+        "repo_path",
+        "branch_type"
+      ],
+      "title": "GitBranch",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "sqlite",
+    "name": "list_tables",
+    "description": "List every table name in the sandboxed sqlite database.",
+    "input_schema": {
+      "properties": {},
+      "title": "list_tablesArguments",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "sqlite",
+    "name": "describe_table",
+    "description": "Describe the columns of `table` (name, type, nullable, primary key).",
+    "input_schema": {
+      "properties": {
+        "table": {
+          "title": "Table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "table"
+      ],
+      "title": "describe_tableArguments",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "sqlite",
+    "name": "read_query",
+    "description": "Run a read-only SELECT query against the sandboxed sqlite database.",
+    "input_schema": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "read_queryArguments",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "sqlite",
+    "name": "write_query",
+    "description": "Run an INSERT/UPDATE/DELETE statement against the sandboxed sqlite database.",
+    "input_schema": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "write_queryArguments",
+      "type": "object"
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "create_entities",
+    "description": "Create multiple new entities in the knowledge graph",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "entities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the entity"
+              },
+              "entityType": {
+                "type": "string",
+                "description": "The type of the entity"
+              },
+              "observations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "An array of observation contents associated with the entity"
+              }
+            },
+            "required": [
+              "name",
+              "entityType",
+              "observations"
+            ]
+          }
+        }
+      },
+      "required": [
+        "entities"
+      ]
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "create_relations",
+    "description": "Create multiple new relations between entities in the knowledge graph. Relations should be in active voice",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "relations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "description": "The name of the entity where the relation starts"
+              },
+              "to": {
+                "type": "string",
+                "description": "The name of the entity where the relation ends"
+              },
+              "relationType": {
+                "type": "string",
+                "description": "The type of the relation"
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "relationType"
+            ]
+          }
+        }
+      },
+      "required": [
+        "relations"
+      ]
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "add_observations",
+    "description": "Add new observations to existing entities in the knowledge graph",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "observations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entityName": {
+                "type": "string",
+                "description": "The name of the entity to add the observations to"
+              },
+              "contents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "An array of observation contents to add"
+              }
+            },
+            "required": [
+              "entityName",
+              "contents"
+            ]
+          }
+        }
+      },
+      "required": [
+        "observations"
+      ]
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "delete_entities",
+    "description": "Delete multiple entities and their associated relations from the knowledge graph",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "entityNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of entity names to delete"
+        }
+      },
+      "required": [
+        "entityNames"
+      ]
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "delete_observations",
+    "description": "Delete specific observations from entities in the knowledge graph",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "deletions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entityName": {
+                "type": "string",
+                "description": "The name of the entity containing the observations"
+              },
+              "observations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "An array of observations to delete"
+              }
+            },
+            "required": [
+              "entityName",
+              "observations"
+            ]
+          }
+        }
+      },
+      "required": [
+        "deletions"
+      ]
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "delete_relations",
+    "description": "Delete multiple relations from the knowledge graph",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "relations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "description": "The name of the entity where the relation starts"
+              },
+              "to": {
+                "type": "string",
+                "description": "The name of the entity where the relation ends"
+              },
+              "relationType": {
+                "type": "string",
+                "description": "The type of the relation"
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "relationType"
+            ]
+          },
+          "description": "An array of relations to delete"
+        }
+      },
+      "required": [
+        "relations"
+      ]
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "read_graph",
+    "description": "Read the entire knowledge graph",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "search_nodes",
+    "description": "Search for nodes in the knowledge graph based on a query",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The search query to match against entity names, types, and observation content"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "tier": "memory",
+    "name": "open_nodes",
+    "description": "Open specific nodes in the knowledge graph by their names",
+    "input_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of entity names to retrieve"
+        }
+      },
+      "required": [
+        "names"
+      ]
+    }
+  }
+]

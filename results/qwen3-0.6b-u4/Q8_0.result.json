@@ -11,7 +11,7 @@
     0.8
   ],
   "svr": 0.8,
-  "total_latency_ms": 2975.817642000038,
+  "total_latency_ms": 4352.381457003503,
   "vram_gb": 1.4580078125,
   "config": {
     "model": "~/models/Qwen_Qwen3-0.6B-Q8_0.gguf",
@@ -25,8 +25,8 @@
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-07T08:33:20.973861+00:00",
-    "git_commit": "69616b6568448465f7646d5521d5b58c4fc754ad",
+    "timestamp": "2026-07-07T11:10:15.701009+00:00",
+    "git_commit": "2d1a52a42404068d6552f62ad80c4f1d46c58b43",
     "git_dirty": true,
     "config_sha256": "8336034e81a34bd2d81da71a847a132e6ba39358317243df79fff51b17ab86aa",
     "fixture_sha256": "1cd727f62eabbd0e0f75d272ce4f2c844ba794c2600d2edc65f401587e4bc553",
@@ -49,5 +49,67 @@
       "torch_cuda_available": null,
       "torch_cuda_device_name": null
     }
-  }
+  },
+  "instances": [
+    {
+      "task_id": "u4-read-graph",
+      "tool": "read_graph",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-search-acme",
+      "tool": "search_nodes",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u4-delete-leads-relation",
+      "tool": "delete_relations",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-open-alice",
+      "tool": "open_nodes",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u4-open-alice-and-bob",
+      "tool": "open_nodes",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u4-add-bob-hamburg",
+      "tool": "add_observations",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u4-create-carol",
+      "tool": "create_entities",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u4-carol-reports-to-alice",
+      "tool": "create_relations",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-delete-acme",
+      "tool": "delete_entities",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-delete-alice-german",
+      "tool": "delete_observations",
+      "svr_pass": true,
+      "tsr_pass": true
+    }
+  ]
 }

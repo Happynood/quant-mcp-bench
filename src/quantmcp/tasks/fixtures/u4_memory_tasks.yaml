@@ -10,15 +10,21 @@
 # call, for the same reason as the U1/U2/U3 tasks. Every checker below was
 # verified against this server's real response/state before being trusted
 # (tests/test_servers_memory.py).
+# `tool:` on each task (Phase 7) declares which tool that task is designed
+# to exercise, for the per-tool SCI-vs-Δ regression (H2) -- all 9 memory
+# tools already had task coverage, so no new tasks were added here; only
+# the tool metadata is new.
 tasks:
   - id: u4-read-graph
     instruction: "Give me everything currently stored in the knowledge graph."
+    tool: read_graph
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Project Falcon"}
 
   - id: u4-search-acme
     instruction: "Who works at Acme Corp?"
+    tool: search_nodes
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Bob"}
@@ -27,6 +33,7 @@ tasks:
     instruction: >-
       There's a record that Alice leads Project Falcon — that's no longer
       true, delete that specific relation.
+    tool: delete_relations
     checker:
       name: file_lacks
       args:
@@ -35,18 +42,21 @@ tasks:
 
   - id: u4-open-alice
     instruction: "What do you know about Alice specifically?"
+    tool: open_nodes
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Berlin"}
 
   - id: u4-open-alice-and-bob
     instruction: "Look up both Alice and Bob and tell me what's on file for each."
+    tool: open_nodes
     checker:
       name: call_result_contains
       args: {index: 0, contains: "Munich"}
 
   - id: u4-add-bob-hamburg
     instruction: "Bob just moved to Hamburg — add that as a new fact about him."
+    tool: add_observations
     checker:
       name: file_contains
       args: {filename: memory.json, contains: "Lives in Hamburg"}
@@ -55,12 +65,14 @@ tasks:
     instruction: >-
       We hired someone new named Carol, a Designer — record her in the
       system.
+    tool: create_entities
     checker:
       name: file_contains
       args: {filename: memory.json, contains: '"name":"Carol","entityType":"Designer"'}
 
   - id: u4-carol-reports-to-alice
     instruction: "Record that Carol reports to Alice."
+    tool: create_relations
     checker:
       name: file_contains
       args:
@@ -69,6 +81,7 @@ tasks:
 
   - id: u4-delete-acme
     instruction: "Acme Corp doesn't exist anymore — remove it entirely from the graph."
+    tool: delete_entities
     checker:
       name: file_lacks
       args: {filename: memory.json, contains: '"name":"Acme Corp"'}
@@ -77,6 +90,7 @@ tasks:
     instruction: >-
       Alice has an observation on file that says "Speaks German and
       English" — remove exactly that fact.
+    tool: delete_observations
     checker:
       name: file_lacks
       args: {filename: memory.json, contains: "Speaks German and English"}

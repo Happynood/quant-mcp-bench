@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +42,12 @@ class RunResult:
     manifest: RunManifest
     total_latency_ms: float
     peak_vram_mb: float | None = None
+    # Per-instance outcomes, tagged with each task's declared target tool
+    # (spec §4.3 Phase 7) -- lets the SCI-vs-Δ regression pair a tool's own
+    # schema complexity with its own pass rate, instead of only a single
+    # tier-level aggregate. Optional/empty for older result files and for
+    # tasks with no declared `tool` (e.g. task fixtures predating Phase 7).
+    outcomes: list[InstanceOutcome] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -59,6 +65,15 @@ class RunResult:
             "vram_gb": (self.peak_vram_mb / 1024.0) if self.peak_vram_mb is not None else None,
             "config": self.config,
             "manifest": asdict(self.manifest),
+            "instances": [
+                {
+                    "task_id": o.task_id,
+                    "tool": o.tool,
+                    "svr_pass": o.svr_pass,
+                    "tsr_pass": o.tsr_pass,
+                }
+                for o in self.outcomes
+            ],
         }
 
 
@@ -127,6 +142,7 @@ async def _run_one_instance(
                 parse_succeeded=parse_succeeded,
                 svr_pass=svr_pass,
                 tsr_pass=tsr_pass,
+                tool=task.tool,
             )
             return outcome, latency_ms, peak_vram_mb, handle.server_version
 
@@ -191,6 +207,7 @@ async def run_eval_async(
         manifest=manifest,
         total_latency_ms=total_latency_ms,
         peak_vram_mb=peak_vram_mb,
+        outcomes=outcomes,
     )
 
 

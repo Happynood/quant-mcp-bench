@@ -5,7 +5,7 @@ decoding: free
 chat_variant: qwen3_nothink
 server:
   tier: git
-sample_size: 10
+sample_size: 12
 seed: 0
 temperature: 0.0
 

@@ -1,5 +1,5 @@
 {
-  "n": 12,
+  "n": 13,
   "svr_mcp": 0.0,
   "tsr": 0.0,
   "svr_mcp_ci": [
@@ -11,7 +11,7 @@
     0.0
   ],
   "svr": 0.0,
-  "total_latency_ms": 32559.897215998717,
+  "total_latency_ms": 97008.16704199315,
   "vram_gb": 1.8232421875,
   "config": {
     "model": "~/models/Llama-3.2-1B-Instruct-Q8_0.gguf",
@@ -20,16 +20,16 @@
     "decoding": "free",
     "chat_variant": "default",
     "server_tier": "filesystem",
-    "sample_size": 12,
+    "sample_size": 13,
     "seed": 0,
     "temperature": 0.0
   },
   "manifest": {
-    "timestamp": "2026-07-06T23:11:14.141514+00:00",
-    "git_commit": "eaf6596d5cf7a33c88710c5bb3851170a10f61ca",
+    "timestamp": "2026-07-07T11:15:13.984742+00:00",
+    "git_commit": "2d1a52a42404068d6552f62ad80c4f1d46c58b43",
     "git_dirty": true,
-    "config_sha256": "45449f9a910636eac482f6a7e493b926f7f96e84b20f2cb92705357dae6b5ea9",
-    "fixture_sha256": "05f4271101928c527ef92ab3da7013314c2bf97e1e687ddff2ce6dbb249e924c",
+    "config_sha256": "e46826f90d88850f408a84c8ad48bf4bef4c50686e47cbfba00a0735eaf161e8",
+    "fixture_sha256": "2a56a71dce74fdc1052f257ac0dbba658f0e2bf2b10c788a43a15986b78142c7",
     "model": "~/models/Llama-3.2-1B-Instruct-Q8_0.gguf",
     "backend": "llama-cpp",
     "quant": "Q8_0",
@@ -49,5 +49,85 @@
       "torch_cuda_available": null,
       "torch_cuda_device_name": null
     }
-  }
+  },
+  "instances": [
+    {
+      "task_id": "u1-read-todo",
+      "tool": "read_text_file",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-write-hello",
+      "tool": "write_file",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-create-dir",
+      "tool": "create_directory",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-list-notes",
+      "tool": "list_directory",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-list-sizes-data",
+      "tool": "list_directory_with_sizes",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-search-md",
+      "tool": "search_files",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-directory-tree",
+      "tool": "directory_tree",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-get-file-info",
+      "tool": "get_file_info",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-move-file",
+      "tool": "move_file",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-list-allowed-dirs",
+      "tool": "list_allowed_directories",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-edit-file",
+      "tool": "edit_file",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-read-multiple",
+      "tool": "read_multiple_files",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u1-read-image",
+      "tool": "read_media_file",
+      "svr_pass": false,
+      "tsr_pass": false
+    }
+  ]
 }

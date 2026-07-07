@@ -43,6 +43,7 @@ class InstanceOutcome:
     parse_succeeded: bool
     svr_pass: bool
     tsr_pass: bool
+    tool: str | None = None
 
 
 @dataclass(frozen=True)

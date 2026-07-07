@@ -3,6 +3,26 @@
 ## [Unreleased]
 
 ### Added
+- Phase 7 (SCI statistical power + family coverage), part 1: fixed
+  `schema/complexity.py`'s `_max_depth`/`_prop_count` to recurse through
+  array `items`, not just object `properties` — the array-recursion gap
+  already disclosed in the README. Recomputed SCI across the live 39-tool
+  corpus; memory's mean SCI moved from -0.359 (2nd-lowest of 4 tiers) to
+  +0.194 (2nd-highest), confirming it had been undercounted.
+- Phase 7, part 2: added per-tool tracking end to end (`tool:` on every
+  task fixture, a new `"instances"` field on `result.json`, and
+  `report/sci_regression.py` + `quantmcp sci-regression`) so the SCI-vs-Δ
+  regression (H2) uses one point per tool instead of one per tier. Added
+  task coverage for the 3 previously-untested tools this made worth
+  closing (`read_media_file`, `git_diff`, `git_checkout`), taking 38 of 39
+  live tools to at least one task (`read_file` deliberately excluded: it's
+  marked deprecated in favor of the schema-identical `read_text_file`, so
+  no naturalistic instruction can fairly force its selection). Re-ran
+  real GPU sweeps for both existing model families across all 4 tiers to
+  populate the new per-instance data. Result: n=38, slope=+0.140, 95%
+  bootstrap CI=[-0.007, +0.315] — a positive (H2-predicted-direction)
+  relationship that doesn't reach significance, a materially different
+  and better-powered null result than the original 4-point analysis.
 - Phase 0: Project skeleton — vendored Backend/parsing/validation/metrics
   deltas+stats/report layers from `quant-toolcall-bench`, new MCP-specific
   layers (servers, execution/sandbox+dispatcher, tasks, schema/complexity,

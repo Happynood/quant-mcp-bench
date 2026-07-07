@@ -1,9 +1,9 @@
 """CLI (spec §6.3), modeled on quant-toolcall-bench's `quantcall` CLI shape
 but not vendored verbatim: quantmcp's `run` command launches a sandboxed
 MCP server + task fixture instead of sampling a BFCL tier. `run`,
-`cross-bench`, `leaderboard`, `compare`, and `validate-config` are fully
-implemented; `sweep` remains a stub (see its own docstring for why and
-what to use instead).
+`cross-bench`, `leaderboard`, `compare`, `validate-config`, `dump-schemas`,
+and `sci-regression` are fully implemented; `sweep` remains a stub (see its
+own docstring for why and what to use instead).
 """
 
 from __future__ import annotations
@@ -266,6 +266,59 @@ def cross_bench_cmd(
 
     if output_path is not None:
         payload = {"rho": result.rho, "n_pairs": result.n_pairs, "table": result.table}
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(output_path).write_text(json.dumps(payload, indent=2))
+        click.echo(f"Written to {output_path}")
+
+
+@main.command("sci-regression")
+@click.argument("result_files", nargs=-1, required=True, type=click.Path(exists=True))
+@click.option("--schemas", "schemas_path", required=True, type=click.Path(exists=True))
+@click.option("--baseline-quant", default="fp16", show_default=True)
+@click.option("--degraded-quant", default="Q4_K_M", show_default=True)
+@click.option("--output", "output_path", default=None, type=click.Path())
+def sci_regression_cmd(
+    result_files: tuple[str, ...],
+    schemas_path: str,
+    baseline_quant: str,
+    degraded_quant: str,
+    output_path: str | None,
+) -> None:
+    """Per-tool SCI-vs-Δ regression (H2, spec §4.3, Phase 7)."""
+    from quantmcp.report.sci_regression import compute_sci_delta_regression
+
+    schemas = json.loads(Path(schemas_path).read_text())
+    result = compute_sci_delta_regression(
+        [Path(p) for p in result_files],
+        schemas,
+        baseline_quant=baseline_quant,
+        degraded_quant=degraded_quant,
+    )
+
+    click.echo(f"{'tool':<24}{'tier':<12}{'SCI':>8}{'Δ SVR-MCP':>12}")
+    for p in sorted(result.points, key=lambda p: p.sci):
+        click.echo(f"{p.tool:<24}{p.tier:<12}{p.sci:>8.3f}{p.delta_svr:>12.3f}")
+    lo, hi = result.slope_ci
+    click.echo(f"\nn={result.n}  slope={result.slope:.4f}  95% CI=[{lo:.4f}, {hi:.4f}]")
+
+    if output_path is not None:
+        payload = {
+            "n": result.n,
+            "slope": result.slope,
+            "intercept": result.intercept,
+            "slope_ci": list(result.slope_ci),
+            "points": [
+                {
+                    "tool": p.tool,
+                    "tier": p.tier,
+                    "sci": p.sci,
+                    "delta_svr": p.delta_svr,
+                    "n_baseline": p.n_baseline,
+                    "n_quant": p.n_quant,
+                }
+                for p in result.points
+            ],
+        }
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         Path(output_path).write_text(json.dumps(payload, indent=2))
         click.echo(f"Written to {output_path}")
