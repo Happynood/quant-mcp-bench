@@ -27,8 +27,22 @@
   config; a Pareto-frontier chart (reliability vs. peak VRAM, `plotly`,
   optional `space` extra) marking which (model, quant, tier) configs are
   Pareto-optimal.
+- Phase 4: `dump-schemas` CLI command (frozen live tool schemas per tier)
+  and `cross-bench --output` (machine-readable CBC result); published the
+  `quantmcp-suite` and `quantmcp-results` HF datasets and a Gradio Space
+  leaderboard (Leaderboard, Pareto Front, Cross-Benchmark, Schema
+  Complexity, and About tabs) at
+  [happynood/quantmcp-leaderboard](https://huggingface.co/spaces/happynood/quantmcp-leaderboard).
 
 ### Fixed
+- Every committed result/manifest file and sweep config recorded the exact
+  local absolute path this benchmark was run from, leaking the local
+  username into public GitHub/HF artifacts. Replaced with a portable
+  `~/models/...` path throughout; `QuantMCPConfig` now expands `~` at load
+  time so the committed sweep configs keep working unchanged.
+- The MCP leaderboard published local GGUF paths verbatim in its `model`
+  column; now reuses the already-vendored `sanitize_model_name` (the same
+  fix `quant-toolcall-bench` already applied to the same problem).
 - `hardware.py`'s GPU fingerprint collection failed silently on drivers
   that reject `--query-gpu=...,cuda_version,...` as a CSV field, leaving
   every manifest's `gpu` field `null` despite real GPU execution. Now

@@ -1,5 +1,9 @@
 # QuantMCP
 
+[![Leaderboard](https://img.shields.io/badge/🤗%20Space-Leaderboard-yellow)](https://huggingface.co/spaces/happynood/quantmcp-leaderboard)
+[![Results dataset](https://img.shields.io/badge/🤗%20Dataset-Results-blue)](https://huggingface.co/datasets/happynood/quantmcp-results)
+[![Suite dataset](https://img.shields.io/badge/🤗%20Dataset-Suite-blue)](https://huggingface.co/datasets/happynood/quantmcp-suite)
+
 Does quantization survive real, unmodified MCP tool schemas — not just
 curated benchmark schemas? QuantMCP re-runs the `quant-toolcall-bench`
 (QuantCall) measurement methodology (schema-validity, execution success,
@@ -21,10 +25,12 @@ here.
 - **Cross-Benchmark Consistency (CBC) is negative.** QuantCall's
   BFCL-measured quantization degradation pattern does not carry over
   cleanly to real MCP tool schemas for either model family tested. The
-  exact magnitude is not yet stable at this sample size (a re-run of the
-  identical config moved the point estimate from -0.824 to -0.265 — sign
-  stable, magnitude not), so treat the direction, not the number, as the
-  finding.
+  exact magnitude took three independent computations to stabilize
+  (-0.824 on the first run, -0.265 on an identical single re-run, -0.551
+  once averaged over 3 repeats per config) — the sign held throughout, the
+  magnitude did not until repeats were averaged. Treat -0.551 (n=6 pairs)
+  as the current best estimate, not a settled final number. Full
+  convergence table in [`docs/RUN_REAL.md`](docs/RUN_REAL.md).
 - **Real MCP schemas surface failure modes BFCL's curated schemas don't.**
   Llama-3.2-1B shifts between echoing back a tool's JSON *schema* instead
   of calling it (at fp16/Q8_0) and a flatter, sometimes-correct call shape
@@ -90,6 +96,14 @@ uv run quantmcp cross-bench results/*/*.result.json --bfcl-results docs/bfcl_ref
   [`CONTRIBUTING.md`](CONTRIBUTING.md) to add your own hardware's numbers.
 - `docs/RUN_REAL.md` — the actual, current source of truth for every
   number this project has produced, including what didn't work.
+
+## HuggingFace
+
+| Artifact | URL |
+|----------|-----|
+| Eval suite (task fixtures + frozen schemas) | [happynood/quantmcp-suite](https://huggingface.co/datasets/happynood/quantmcp-suite) |
+| Results dataset (submit your runs) | [happynood/quantmcp-results](https://huggingface.co/datasets/happynood/quantmcp-results) |
+| Live leaderboard | [happynood/quantmcp-leaderboard](https://huggingface.co/spaces/happynood/quantmcp-leaderboard) |
 
 ## Related project
 
