@@ -19,6 +19,7 @@ from typing import Any
 
 from quantmcp.metrics.deltas import compute_eta
 from quantmcp.report.pareto import pareto_front
+from quantmcp.report.published import sanitize_model_name
 from quantmcp.report.tables import _md_table
 
 # SCI per tier, computed once from the live tool schemas of all three real
@@ -131,9 +132,15 @@ def _row_from_result(data: dict[str, Any]) -> LeaderboardRow:
     vram_gb = data.get("vram_gb")
     w1, w2 = _ETA_WEIGHTS
     eta = compute_eta(w1 * svr_mcp + w2 * tsr, vram_gb)
+    quant = str(cfg.get("quant", "?"))
+    # Local GGUF paths (e.g. "/home/x/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf")
+    # would otherwise leak the local username/filesystem layout into any
+    # published leaderboard or HF dataset — reuses the vendored sanitizer
+    # rather than a bespoke path-scrubbing implementation.
+    model = sanitize_model_name(str(cfg.get("model", "?")), quant)
     return LeaderboardRow(
-        model=str(cfg.get("model", "?")),
-        quant=str(cfg.get("quant", "?")),
+        model=model,
+        quant=quant,
         tier=str(cfg.get("server_tier", "?")),
         n=int(data.get("n", 0)),
         svr_mcp=svr_mcp,

@@ -32,6 +32,26 @@ def _write_result(
     )
 
 
+def test_row_from_result_sanitizes_local_model_path():
+    from quantmcp.report.mcp_leaderboard import _row_from_result
+
+    row = _row_from_result(
+        {
+            "n": 10,
+            "svr_mcp": 0.8,
+            "tsr": 0.6,
+            "vram_gb": 2.0,
+            "config": {
+                "model": "/home/someuser/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+                "quant": "Q4_K_M",
+                "server_tier": "filesystem",
+            },
+        }
+    )
+    assert row.model == "Qwen3-0.6B"
+    assert "/home/" not in row.model
+
+
 def test_build_mcp_leaderboard_computes_eta_and_tier_breakdown(tmp_path: Path):
     results_dir = tmp_path / "results" / "modelA-filesystem"
     results_dir.mkdir(parents=True)
