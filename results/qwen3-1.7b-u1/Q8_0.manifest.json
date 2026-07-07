@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-07-07T11:37:03.652259+00:00",
+  "git_commit": "f8afb39e1c4a56776d1e0adcc925d85def3061e2",
+  "git_dirty": true,
+  "config_sha256": "2c7a4f2c1d47755b3fc956346bb6bd9e2553daa42fcd347054f21277fe877223",
+  "fixture_sha256": "2a56a71dce74fdc1052f257ac0dbba658f0e2bf2b10c788a43a15986b78142c7",
+  "model": "~/models/Qwen_Qwen3-1.7B-Q8_0.gguf",
+  "backend": "llama-cpp",
+  "quant": "Q8_0",
+  "decoding": "free",
+  "server_tier": "filesystem",
+  "mcp_server_version": "0.2.0",
+  "seed": 0,
+  "python_version": "3.11.15 (main, May 10 2026, 19:28:18) [Clang 22.1.3 ]",
+  "platform_info": "Linux-7.0.0-27-generic-x86_64-with-glibc2.43",
+  "cpu_model": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+  "cpu_count": 12,
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+    "driver_version": "595.71.05",
+    "cuda_version": "13.2",
+    "vram_total_mb": 4096,
+    "torch_cuda_available": null,
+    "torch_cuda_device_name": null
+  }
+}

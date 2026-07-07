@@ -23,6 +23,17 @@
   bootstrap CI=[-0.007, +0.315] — a positive (H2-predicted-direction)
   relationship that doesn't reach significance, a materially different
   and better-powered null result than the original 4-point analysis.
+- Phase 7, part 3: added Qwen3-1.7B as a 3rd model family across all 4
+  tiers (reused the GGUF already cached from `quant-toolcall-bench`, no
+  re-download). Hit a real CUDA OOM loading its bf16 weights at this
+  project's standard `n_ctx=4096` (confirmed independently, matching
+  quant-toolcall-bench's own documented limitation for this exact model);
+  resolved the same way QuantCall's own published table does — Q8_0 as
+  this family's baseline instead of fp16. `report/cross_bench.py` gained a
+  per-family baseline-quant override so `compute_cbc` no longer silently
+  drops a family with no fp16 entry. CBC recomputed with all 3 families:
+  rho=-0.755 (n=8, up from n=6/-0.551 with 2 families) — sign unchanged,
+  magnitude strengthened, not weakened.
 - Phase 0: Project skeleton — vendored Backend/parsing/validation/metrics
   deltas+stats/report layers from `quant-toolcall-bench`, new MCP-specific
   layers (servers, execution/sandbox+dispatcher, tasks, schema/complexity,

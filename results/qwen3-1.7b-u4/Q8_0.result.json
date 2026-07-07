@@ -1,0 +1,115 @@
+{
+  "n": 10,
+  "svr_mcp": 0.9,
+  "tsr": 0.7,
+  "svr_mcp_ci": [
+    0.7,
+    1.0
+  ],
+  "tsr_ci": [
+    0.4,
+    0.9
+  ],
+  "svr": 0.9,
+  "total_latency_ms": 9049.82252701302,
+  "vram_gb": 2.5712890625,
+  "config": {
+    "model": "~/models/Qwen_Qwen3-1.7B-Q8_0.gguf",
+    "backend": "llama-cpp",
+    "quant": "Q8_0",
+    "decoding": "free",
+    "chat_variant": "qwen3_nothink",
+    "server_tier": "memory",
+    "sample_size": 10,
+    "seed": 0,
+    "temperature": 0.0
+  },
+  "manifest": {
+    "timestamp": "2026-07-07T11:44:32.270181+00:00",
+    "git_commit": "f8afb39e1c4a56776d1e0adcc925d85def3061e2",
+    "git_dirty": true,
+    "config_sha256": "a312a2d415ed71c1d6be5dc37c20b0901e50f75947380a9ca85786b383086ead",
+    "fixture_sha256": "1cd727f62eabbd0e0f75d272ce4f2c844ba794c2600d2edc65f401587e4bc553",
+    "model": "~/models/Qwen_Qwen3-1.7B-Q8_0.gguf",
+    "backend": "llama-cpp",
+    "quant": "Q8_0",
+    "decoding": "free",
+    "server_tier": "memory",
+    "mcp_server_version": "0.6.3",
+    "seed": 0,
+    "python_version": "3.11.15 (main, May 10 2026, 19:28:18) [Clang 22.1.3 ]",
+    "platform_info": "Linux-7.0.0-27-generic-x86_64-with-glibc2.43",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+    "cpu_count": 12,
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "driver_version": "595.71.05",
+      "cuda_version": "13.2",
+      "vram_total_mb": 4096,
+      "torch_cuda_available": null,
+      "torch_cuda_device_name": null
+    }
+  },
+  "instances": [
+    {
+      "task_id": "u4-read-graph",
+      "tool": "read_graph",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-search-acme",
+      "tool": "search_nodes",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-delete-leads-relation",
+      "tool": "delete_relations",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-open-alice",
+      "tool": "open_nodes",
+      "svr_pass": false,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u4-open-alice-and-bob",
+      "tool": "open_nodes",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-add-bob-hamburg",
+      "tool": "add_observations",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u4-create-carol",
+      "tool": "create_entities",
+      "svr_pass": true,
+      "tsr_pass": false
+    },
+    {
+      "task_id": "u4-carol-reports-to-alice",
+      "tool": "create_relations",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-delete-acme",
+      "tool": "delete_entities",
+      "svr_pass": true,
+      "tsr_pass": true
+    },
+    {
+      "task_id": "u4-delete-alice-german",
+      "tool": "delete_observations",
+      "svr_pass": true,
+      "tsr_pass": true
+    }
+  ]
+}

@@ -94,6 +94,45 @@ def test_compute_cbc_raises_with_fewer_than_two_pairs(
         compute_cbc(files, bfcl_results_path)
 
 
+def test_compute_cbc_uses_per_family_baseline_quant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Qwen3-1.7B has no fp16 entry on either side (its bf16 weights OOM on
+    a 4GB card) -- compute_cbc must use its configured Q8_0 baseline instead
+    of silently dropping the family via the hardcoded "fp16" lookup."""
+    import quantmcp.report.cross_bench as cb
+
+    monkeypatch.setattr(cb, "_MODEL_FAMILY_MARKERS", ["FamilyA", "FamilyC"])
+    monkeypatch.setattr(cb, "_FAMILY_BASELINE_QUANT", {"FamilyC": "Q8_0"})
+
+    bfcl_path = tmp_path / "bfcl.json"
+    bfcl_path.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {"model": "FamilyA", "quant": "fp16", "svr_bfcl": 0.8},
+                    {"model": "FamilyA", "quant": "Q4_K_M", "svr_bfcl": 0.6},
+                    {"model": "FamilyC", "quant": "Q8_0", "svr_bfcl": 0.9},
+                    {"model": "FamilyC", "quant": "Q4_K_M", "svr_bfcl": 0.85},
+                ]
+            }
+        )
+    )
+
+    files = [
+        _write_result(tmp_path, "a-fp16.json", "FamilyA-x.gguf", "fp16", 10, 0.9),
+        _write_result(tmp_path, "a-q4.json", "FamilyA-x.gguf", "Q4_K_M", 10, 0.5),
+        _write_result(tmp_path, "c-q8.json", "FamilyC-x.gguf", "Q8_0", 10, 0.7),
+        _write_result(tmp_path, "c-q4.json", "FamilyC-x.gguf", "Q4_K_M", 10, 0.6),
+    ]
+
+    result = compute_cbc(files, bfcl_path)
+    c_row = next(r for r in result.table if r["model"] == "FamilyC")
+    assert c_row["baseline_quant"] == "Q8_0"
+    assert c_row["delta_svr_bfcl"] == pytest.approx(0.85 - 0.9)
+    assert c_row["delta_svr_mcp"] == pytest.approx(0.6 - 0.7)
+
+
 def test_cross_bench_cli_writes_output_json(
     tmp_path: Path, bfcl_results_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

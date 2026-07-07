@@ -591,6 +591,60 @@ repeats to build a real empirical distribution over Δ, not the 3 used
 here (3 is enough to demonstrate the instability and get a noticeably
 more stable point estimate; it is not enough for a rigorous CI).
 
+### A third model family (Phase 7): Qwen3-1.7B, and does CBC's conclusion change?
+
+Two families is a thin basis for "model family predicts sensitivity more
+than size" (H3) or for CBC. Qwen3-1.7B was added across all 4 tiers as a
+3rd, real data point — same Qwen3 *family* as the existing 0.6B model, but
+~3x the parameters, letting family and size be told apart directly for the
+first time in this project's own data (not just inherited from QuantCall's
+BFCL write-up).
+
+**Real blocker hit and resolved, not guessed around:** Qwen3-1.7B's bf16
+weights (~4.07 GB) hit a genuine CUDA OOM on this project's 4GB card at
+`n_ctx=4096` (this project's standard context size for every other sweep)
+— confirmed directly (`cudaMalloc failed: out of memory` allocating the KV
+cache), independently reproducing the identical limitation
+quant-toolcall-bench's own README already documented for this exact model
+on the same hardware class (OOM at both `n_ctx=4096` and `n_ctx=2048`,
+only `n_ctx=512` loads, too small for real tool-schema prompts). Rather
+than shrinking `n_ctx` project-wide (would make every tier's prompts
+incomparable) or silently dropping this family, the resolution mirrors
+QuantCall's own published one exactly: **Q8_0 is Qwen3-1.7B's baseline**
+instead of fp16, on both the BFCL reference side (`docs/bfcl_reference_svr.json`)
+and this project's own MCP side (no `fp16.yaml` sweep config exists for
+this model; only `Q8_0`/`Q5_K_M`/`Q4_K_M`). `report/cross_bench.py` gained
+a `_FAMILY_BASELINE_QUANT` map (default `"fp16"`, override `"Q8_0"` for
+this family) so `compute_cbc` computes real deltas for this family instead
+of silently excluding it via a hardcoded `"fp16"` lookup.
+
+Real GPU sweep, all 4 tiers, 3 quants (Q8_0/Q5_K_M/Q4_K_M), single run
+(disclosed as such, same precision caveat as U4's original single-run
+data, not the 3-repeat mean U1-U3 get for the other two families):
+SVR-MCP is flat and high across every tier and quant tested (filesystem
+1.000/1.000/1.000, git 1.000/1.000/1.000, sqlite 0.700/0.700/0.400, memory
+0.900/0.800/0.800 for Q8_0/Q5_K_M/Q4_K_M respectively) — this family shows
+essentially the same quantization-robustness pattern as Qwen3-0.6B
+(flat/near-flat across quants), just at a uniformly higher absolute level,
+consistent with H3 (family predicts sensitivity, not size — a *bigger*
+Qwen3 model is not more fragile than the smaller one) rather than against
+it.
+
+**CBC recomputed with all 3 families pooled: rho = -0.755 (n=8 pairs)**,
+up from n=6/rho=-0.551 with 2 families. **The sign did not change** — it
+was already negative and stayed negative, the same direction every prior
+computation of this number has shown. **The magnitude got stronger, not
+weaker**: -0.551 to -0.755. This is a real answer to whether the 3rd
+family changes the conclusion, not just whether it's "consistent": adding
+Qwen3-1.7B did not merely fail to contradict the existing finding, it
+strengthened it — QuantCall's BFCL-measured degradation pattern predicts
+real MCP-schema degradation even less well with a 3rd family in the mix
+than with 2. n=8 is still far too few for a rigorous p-value on a Spearman
+correlation (same caveat as the n=6 number), and Qwen3-1.7B's own 2 pairs
+are single-run rather than 3-repeat-mean, so this new number should be
+read with at least as much caution as the earlier -0.824-to-0.551
+convergence story above required.
+
 ### Schema Complexity Index vs. degradation (H2) — array-recursion bug fixed (Phase 7)
 
 H2 asks whether a tier's Schema Complexity Index (SCI, spec §4.3, computed

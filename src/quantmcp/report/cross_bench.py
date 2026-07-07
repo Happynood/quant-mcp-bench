@@ -14,7 +14,15 @@ from typing import Any
 
 from quantmcp.metrics.correlation import spearman_correlation
 
-_MODEL_FAMILY_MARKERS = ["Qwen3-0.6B", "Llama-3.2-1B"]
+_MODEL_FAMILY_MARKERS = ["Qwen3-0.6B", "Qwen3-1.7B", "Llama-3.2-1B"]
+
+# Every family's baseline is its own fp16 run, except Qwen3-1.7B: its bf16
+# weights (~4.07 GB) hit a real CUDA OOM on a 4GB card at any usable context
+# length (confirmed at n_ctx=4096 and n_ctx=2048; only n_ctx=512 loads, too
+# small for real tool-schema prompts) -- the same hardware limitation
+# quant-toolcall-bench already hit and documented for this exact model, so
+# its own published BFCL table also uses Q8_0 as this family's baseline.
+_FAMILY_BASELINE_QUANT: dict[str, str] = {"Qwen3-1.7B": "Q8_0"}
 
 
 def _model_family(model_path: str) -> str | None:
@@ -67,24 +75,26 @@ def compute_cbc(result_files: list[Path], bfcl_results_path: Path) -> CbcResult:
     delta_mcp: list[float] = []
     table: list[dict[str, Any]] = []
     for family in families:
-        fp16_bfcl = bfcl_svr.get((family, "fp16"))
-        fp16_mcp = mcp_svr.get((family, "fp16"))
-        if fp16_bfcl is None or fp16_mcp is None:
+        baseline_quant = _FAMILY_BASELINE_QUANT.get(family, "fp16")
+        baseline_bfcl = bfcl_svr.get((family, baseline_quant))
+        baseline_mcp = mcp_svr.get((family, baseline_quant))
+        if baseline_bfcl is None or baseline_mcp is None:
             continue
         for (fam, quant), svr in sorted(mcp_svr.items()):
-            if fam != family or quant == "fp16":
+            if fam != family or quant == baseline_quant:
                 continue
             bfcl = bfcl_svr.get((family, quant))
             if bfcl is None:
                 continue
-            d_bfcl = bfcl - fp16_bfcl
-            d_mcp = svr - fp16_mcp
+            d_bfcl = bfcl - baseline_bfcl
+            d_mcp = svr - baseline_mcp
             delta_bfcl.append(d_bfcl)
             delta_mcp.append(d_mcp)
             table.append(
                 {
                     "model": family,
                     "quant": quant,
+                    "baseline_quant": baseline_quant,
                     "delta_svr_bfcl": d_bfcl,
                     "delta_svr_mcp": d_mcp,
                 }
