@@ -575,10 +575,14 @@ pairs, so CBC is unchanged: -0.551 (n=6 pairs)** — a useful stability
 check in its own right: the headline number is not sensitive to adding one
 more single-repeat tier into an otherwise 3-repeat-averaged pool.
 
-**CBC = -0.551 (n=6 pairs).** QuantCall's BFCL-measured degradation
-pattern does not carry over cleanly to real MCP tool schemas for these
-two families — the direction is consistent across every computation of
-this number so far, even though the exact magnitude isn't.
+**CBC = -0.551 (n=6 pairs), with these two families.** QuantCall's
+BFCL-measured degradation pattern does not carry over cleanly to real MCP
+tool schemas for these two families — the direction is consistent across
+every computation of this number so far, even though the exact magnitude
+isn't. **This is not the final number** — see "A third model family
+(Phase 7)" below, where adding Qwen3-1.7B moves this to -0.755 (n=8
+pairs). Kept here rather than overwritten because the 2-family number is
+itself a meaningful data point in the convergence story above.
 
 **This should still be read as a preliminary, directional finding, not a
 statistically established one**: n=6 (model, quant) pairs is far too few
